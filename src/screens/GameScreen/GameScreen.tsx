@@ -76,6 +76,7 @@ export default function GameScreen() {
         Math.max(chaserRadius, Math.min(48, app.screen.height - chaserRadius)),
       );
       app.stage.addChild(chaser);
+      let chaserHealth = 3;
       let chaserIsActive = true;
 
       if (isUnmounted) {
@@ -234,9 +235,12 @@ export default function GameScreen() {
               projectileRadius + chaserRadius;
 
           if (collidesWithChaser) {
-            chaserIsActive = false;
-            app.stage.removeChild(chaser);
-            chaser.destroy();
+            chaserHealth -= 1;
+            if (chaserHealth === 0) {
+              chaserIsActive = false;
+              app.stage.removeChild(chaser);
+              chaser.destroy();
+            }
           }
 
           if (
