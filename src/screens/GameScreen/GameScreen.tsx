@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { Application, Graphics } from "pixi.js";
 import { useEffect, useRef } from "react";
 
 export default function GameScreen() {
@@ -15,6 +15,24 @@ export default function GameScreen() {
     const initialize = async () => {
       await app.init({ resizeTo: container });
       isInitialized = true;
+
+      app.renderer.background.color = 0x0b2d4a;
+
+      const islands = [
+        { x: app.screen.width * 0.25, y: app.screen.height * 0.3, radius: 64 },
+        { x: app.screen.width * 0.7, y: app.screen.height * 0.4, radius: 82 },
+        { x: app.screen.width * 0.45, y: app.screen.height * 0.75, radius: 55 },
+      ];
+
+      for (const island of islands) {
+        const graphic = new Graphics()
+          .circle(0, 0, island.radius)
+          .fill(0xc2a46b)
+          .circle(0, 0, island.radius * 0.72)
+          .fill(0x426b4a);
+        graphic.position.set(island.x, island.y);
+        app.stage.addChild(graphic);
+      }
 
       if (isUnmounted) {
         app.destroy({ removeView: true });
