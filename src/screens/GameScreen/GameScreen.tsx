@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { GAME_CONFIG } from "../../game/config/gameConfig";
 import { Chaser } from "../../game/entities/Chaser";
 import { Player } from "../../game/entities/Player";
+import { Shooter } from "../../game/entities/Shooter";
 
 type Island = {
   x: number;
@@ -98,23 +99,27 @@ export default function GameScreen({
       await chaser.ready;
       app.stage.addChild(chaser.graphic);
 
-      const shooterRadius = GAME_CONFIG.shooter.radius;
-      const shooterSpeed = GAME_CONFIG.shooter.speed;
-      const shooter = new Graphics().circle(0, 0, shooterRadius).fill(0x9b59b6);
+      const shooter = new Shooter();
       const shooterPositions = [
-        { x: app.screen.width - shooterRadius, y: shooterRadius },
         {
-          x: app.screen.width - shooterRadius,
-          y: app.screen.height - shooterRadius,
+          x: app.screen.width - shooter.collisionRadius,
+          y: shooter.collisionRadius,
         },
-        { x: shooterRadius, y: shooterRadius },
-        { x: shooterRadius, y: app.screen.height - shooterRadius },
+        {
+          x: app.screen.width - shooter.collisionRadius,
+          y: app.screen.height - shooter.collisionRadius,
+        },
+        { x: shooter.collisionRadius, y: shooter.collisionRadius },
+        {
+          x: shooter.collisionRadius,
+          y: app.screen.height - shooter.collisionRadius,
+        },
       ];
       const isClearOfIslands = (position: { x: number; y: number }) =>
         islands.every(
           (island) =>
             Math.hypot(position.x - island.x, position.y - island.y) >=
-            shooterRadius + island.radius,
+            shooter.collisionRadius + island.radius,
         );
       const shooterPosition =
         shooterPositions.find(
@@ -126,24 +131,20 @@ export default function GameScreen({
         ) ??
         shooterPositions.find(isClearOfIslands) ??
         shooterPositions[0];
-      shooter.position.set(shooterPosition.x, shooterPosition.y);
-      app.stage.addChild(shooter);
-      let shooterIsActive = true;
+      shooter.reset(shooterPosition.x, shooterPosition.y);
+      app.stage.addChild(shooter.graphic);
       const shooterProjectiles: Projectile[] = [];
-      const shooterProjectileRadius = GAME_CONFIG.shooter.projectileRadius;
-      const shooterProjectileSpeed = GAME_CONFIG.shooter.projectileSpeed;
-      const shooterFireInterval = GAME_CONFIG.shooter.fireInterval;
-      let shooterFireCooldown: number = shooterFireInterval;
+      let shooterFireCooldown: number = shooter.fireInterval;
       const fireShooterProjectile = () => {
-        const directionX = player.graphic.x - shooter.x;
-        const directionY = player.graphic.y - shooter.y;
+        const directionX = player.graphic.x - shooter.graphic.x;
+        const directionY = player.graphic.y - shooter.graphic.y;
         const distanceToShip = Math.hypot(directionX, directionY);
         if (distanceToShip === 0) return;
 
         const graphic = new Graphics()
-          .circle(0, 0, shooterProjectileRadius)
+          .circle(0, 0, shooter.projectileRadius)
           .fill(0xd8b4e2);
-        graphic.position.set(shooter.x, shooter.y);
+        graphic.position.set(shooter.graphic.x, shooter.graphic.y);
         app.stage.addChild(graphic);
         shooterProjectiles.push({
           graphic,
@@ -313,7 +314,7 @@ export default function GameScreen({
         timerText.text = `Time: ${remainingTime}`;
         shootCooldown = 0;
         sideShootCooldown = 0;
-        shooterFireCooldown = shooterFireInterval;
+        shooterFireCooldown = shooter.fireInterval;
 
         player.reset(app.screen.width / 2, app.screen.height / 2);
 
@@ -321,8 +322,7 @@ export default function GameScreen({
         chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
         if (chaserWasInactive) app.stage.addChild(chaser.graphic);
 
-        shooter.position.set(shooterPosition.x, shooterPosition.y);
-        shooterIsActive = true;
+        shooter.reset(shooterPosition.x, shooterPosition.y);
 
         gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
         gameOverText.visible = false;
@@ -435,50 +435,52 @@ export default function GameScreen({
           }
         }
 
-        if (shooterIsActive) {
+        if (shooter.active) {
           shooterFireCooldown = Math.max(
             0,
             shooterFireCooldown - ticker.deltaTime,
           );
 
-          const directionX = player.graphic.x - shooter.x;
-          const directionY = player.graphic.y - shooter.y;
+          const directionX = player.graphic.x - shooter.graphic.x;
+          const directionY = player.graphic.y - shooter.graphic.y;
           const distanceToShip = Math.hypot(directionX, directionY);
 
           if (distanceToShip > 250) {
             const movementDistance = Math.min(
-              shooterSpeed * ticker.deltaTime,
+              shooter.movementSpeed * ticker.deltaTime,
               distanceToShip - 250,
             );
             const nextShooterX = Math.max(
-              shooterRadius,
+              shooter.collisionRadius,
               Math.min(
-                app.screen.width - shooterRadius,
-                shooter.x + (directionX / distanceToShip) * movementDistance,
+                app.screen.width - shooter.collisionRadius,
+                shooter.graphic.x +
+                  (directionX / distanceToShip) * movementDistance,
               ),
             );
             const nextShooterY = Math.max(
-              shooterRadius,
+              shooter.collisionRadius,
               Math.min(
-                app.screen.height - shooterRadius,
-                shooter.y + (directionY / distanceToShip) * movementDistance,
+                app.screen.height - shooter.collisionRadius,
+                shooter.graphic.y +
+                  (directionY / distanceToShip) * movementDistance,
               ),
             );
             const shooterCollidesWithIsland = islands.some(
               (island) =>
                 Math.hypot(nextShooterX - island.x, nextShooterY - island.y) <
-                shooterRadius + island.radius,
+                shooter.collisionRadius + island.radius,
             );
 
             if (!shooterCollidesWithIsland) {
-              shooter.x = nextShooterX;
-              shooter.y = nextShooterY;
+              shooter.graphic.x = nextShooterX;
+              shooter.graphic.y = nextShooterY;
             }
           }
 
           if (shooterFireCooldown === 0) {
             fireShooterProjectile();
-            shooterFireCooldown = shooterFireInterval;
+            shooterFireCooldown = shooter.fireInterval;
           }
         }
 
@@ -534,9 +536,9 @@ export default function GameScreen({
         for (let index = shooterProjectiles.length - 1; index >= 0; index--) {
           const projectile = shooterProjectiles[index];
           projectile.graphic.x +=
-            projectile.directionX * shooterProjectileSpeed * ticker.deltaTime;
+            projectile.directionX * shooter.projectileSpeed * ticker.deltaTime;
           projectile.graphic.y +=
-            projectile.directionY * shooterProjectileSpeed * ticker.deltaTime;
+            projectile.directionY * shooter.projectileSpeed * ticker.deltaTime;
 
           const collidesWithIsland = islands.some(
             (island) =>
@@ -544,14 +546,14 @@ export default function GameScreen({
                 projectile.graphic.x - island.x,
                 projectile.graphic.y - island.y,
               ) <
-              shooterProjectileRadius + island.radius,
+              shooter.projectileRadius + island.radius,
           );
           const collidesWithPlayer =
             Math.hypot(
               projectile.graphic.x - player.graphic.x,
               projectile.graphic.y - player.graphic.y,
             ) <
-            shooterProjectileRadius + player.collisionRadius;
+            shooter.projectileRadius + player.collisionRadius;
           const isOutsideScreen =
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
