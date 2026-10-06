@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import GameScreen from "./screens/GameScreen/gameScreen.tsx";
 import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
+import ResultScreen from "./screens/ResultScreen/resultScreen";
 
 type GameSettings = {
   duration: number;
@@ -15,7 +16,9 @@ const DEFAULT_GAME_SETTINGS: GameSettings = {
 };
 
 function App() {
-  const [screen, setScreen] = useState<"menu" | "game" | "options">("menu");
+  const [screen, setScreen] = useState<"menu" | "game" | "options" | "result">(
+    "menu",
+  );
   const [gameSettings, setGameSettings] = useState<GameSettings>(() => {
     try {
       const savedSettings = localStorage.getItem(GAME_SETTINGS_STORAGE_KEY);
@@ -40,6 +43,7 @@ function App() {
       return DEFAULT_GAME_SETTINGS;
     }
   });
+  const [finalScore, setFinalScore] = useState(0);
 
   useEffect(() => {
     localStorage.setItem(
@@ -53,6 +57,10 @@ function App() {
       <GameScreen
         duration={gameSettings.duration}
         spawnRate={gameSettings.spawnRate}
+        onGameOver={(score) => {
+          setFinalScore(score);
+          setScreen("result");
+        }}
       />
     );
   }
@@ -68,6 +76,15 @@ function App() {
         onSpawnRateChange={(spawnRate) =>
           setGameSettings((settings) => ({ ...settings, spawnRate }))
         }
+      />
+    );
+  }
+  if (screen === "result") {
+    return (
+      <ResultScreen
+        score={finalScore}
+        onRestart={() => setScreen("game")}
+        onMenu={() => setScreen("menu")}
       />
     );
   }

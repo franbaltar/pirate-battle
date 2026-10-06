@@ -20,9 +20,14 @@ type Projectile = {
 type GameScreenProps = {
   duration: number;
   spawnRate: "low" | "normal" | "high";
+  onGameOver: (score: number) => void;
 };
 
-export default function GameScreen({ duration, spawnRate }: GameScreenProps) {
+export default function GameScreen({
+  duration,
+  spawnRate,
+  onGameOver,
+}: GameScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -331,7 +336,10 @@ export default function GameScreen({ duration, spawnRate }: GameScreenProps) {
           timerText.text = `Time: ${remainingTime}`;
 
           if (remainingTime === 0) {
-            isGameOver = true;
+            if (!isGameOver) {
+              isGameOver = true;
+              onGameOver(playerScore);
+            }
             gameOverText.visible = true;
             return;
           }
@@ -553,7 +561,10 @@ export default function GameScreen({ duration, spawnRate }: GameScreenProps) {
             playerHealthText.text = `HP: ${playerHealth}`;
 
             if (playerHealth === 0) {
-              isGameOver = true;
+              if (!isGameOver) {
+                isGameOver = true;
+                onGameOver(playerScore);
+              }
               gameOverText.position.set(
                 app.screen.width / 2,
                 app.screen.height / 2,
