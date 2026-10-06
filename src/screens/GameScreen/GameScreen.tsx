@@ -95,6 +95,7 @@ export default function GameScreen({
         ),
       };
       chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
+      await chaser.ready;
       app.stage.addChild(chaser.graphic);
 
       const shooterRadius = GAME_CONFIG.shooter.radius;
