@@ -1,5 +1,6 @@
 import { Application, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
+import { GAME_CONFIG } from "../../game/config/gameConfig";
 import { Chaser } from "../../game/entities/Chaser";
 import { Player } from "../../game/entities/Player";
 
@@ -83,8 +84,8 @@ export default function GameScreen() {
       chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
       app.stage.addChild(chaser.graphic);
 
-      const shooterRadius = 18;
-      const shooterSpeed = 1.2;
+      const shooterRadius = GAME_CONFIG.shooter.radius;
+      const shooterSpeed = GAME_CONFIG.shooter.speed;
       const shooter = new Graphics().circle(0, 0, shooterRadius).fill(0x9b59b6);
       const shooterPositions = [
         { x: app.screen.width - shooterRadius, y: shooterRadius },
@@ -115,10 +116,10 @@ export default function GameScreen() {
       app.stage.addChild(shooter);
       let shooterIsActive = true;
       const shooterProjectiles: Projectile[] = [];
-      const shooterProjectileRadius = 4;
-      const shooterProjectileSpeed = 5;
-      const shooterFireInterval = 90;
-      let shooterFireCooldown = shooterFireInterval;
+      const shooterProjectileRadius = GAME_CONFIG.shooter.projectileRadius;
+      const shooterProjectileSpeed = GAME_CONFIG.shooter.projectileSpeed;
+      const shooterFireInterval = GAME_CONFIG.shooter.fireInterval;
+      let shooterFireCooldown: number = shooterFireInterval;
       const fireShooterProjectile = () => {
         const directionX = player.graphic.x - shooter.x;
         const directionY = player.graphic.y - shooter.y;
