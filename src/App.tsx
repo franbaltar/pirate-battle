@@ -5,6 +5,7 @@ import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
 import RankingScreen from "./screens/RankingScreen/rankingScreen";
 import ResultScreen from "./screens/ResultScreen/resultScreen";
+import { submitScore } from "./services/rankingService";
 
 type GameSettings = {
   duration: number;
@@ -89,6 +90,9 @@ function AppContent() {
         score={finalScore}
         onRestart={() => setScreen("game")}
         onMenu={() => setScreen("menu")}
+        onSubmitScore={(playerName) =>
+          submitScore({ playerName, score: finalScore })
+        }
       />
     );
   }

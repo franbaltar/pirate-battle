@@ -1,5 +1,8 @@
 import { http, HttpResponse } from "msw";
-import type { RankingEntry } from "../services/rankingService";
+import type {
+  RankingEntry,
+  SubmitScoreInput,
+} from "../services/rankingService";
 
 const ranking: RankingEntry[] = [
   { id: 1, playerName: "Captain Redwake", score: 9800 },
@@ -11,4 +14,8 @@ const ranking: RankingEntry[] = [
 
 export const handlers = [
   http.get("/api/ranking", () => HttpResponse.json(ranking)),
+  http.post("/api/scores", async ({ request }) => {
+    const scoreData = (await request.json()) as SubmitScoreInput;
+    return HttpResponse.json(scoreData, { status: 201 });
+  }),
 ];
