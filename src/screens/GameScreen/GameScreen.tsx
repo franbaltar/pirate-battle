@@ -34,6 +34,12 @@ export default function GameScreen() {
         app.stage.addChild(graphic);
       }
 
+      const ship = new Graphics()
+        .poly([0, -28, 16, 18, 0, 12, -16, 18])
+        .fill(0xf4d35e);
+      ship.position.set(app.screen.width / 2, app.screen.height / 2);
+      app.stage.addChild(ship);
+
       if (isUnmounted) {
         app.destroy({ removeView: true });
         return;
