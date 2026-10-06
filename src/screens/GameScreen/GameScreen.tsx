@@ -78,6 +78,7 @@ export default function GameScreen({
 
       const player = new Player();
       player.reset(app.screen.width / 2, app.screen.height / 2);
+      await player.ready;
       app.stage.addChild(player.graphic);
 
       const chaser = new Chaser();
