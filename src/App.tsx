@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GameScreen from "./screens/GameScreen/gameScreen.tsx";
 import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
+import RankingScreen from "./screens/RankingScreen/rankingScreen";
 import ResultScreen from "./screens/ResultScreen/resultScreen";
 
 type GameSettings = {
@@ -19,9 +20,9 @@ const DEFAULT_GAME_SETTINGS: GameSettings = {
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const [screen, setScreen] = useState<"menu" | "game" | "options" | "result">(
-    "menu",
-  );
+  const [screen, setScreen] = useState<
+    "menu" | "game" | "options" | "result" | "ranking"
+  >("menu");
   const [gameSettings, setGameSettings] = useState<GameSettings>(() => {
     try {
       const savedSettings = localStorage.getItem(GAME_SETTINGS_STORAGE_KEY);
@@ -91,11 +92,15 @@ function AppContent() {
       />
     );
   }
+  if (screen === "ranking") {
+    return <RankingScreen onBack={() => setScreen("menu")} />;
+  }
 
   return (
     <MainMenu
       onPlay={() => setScreen("game")}
       onOptions={() => setScreen("options")}
+      onRanking={() => setScreen("ranking")}
     />
   );
 }
