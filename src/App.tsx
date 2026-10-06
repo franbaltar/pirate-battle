@@ -1,11 +1,7 @@
+import GameScreen from "./screens/GameScreen/GameScreen";
+
 function App() {
-  return (
-    <main>
-      <h1>Pirate Battle</h1>
-      <p>Jungle Gaming Challenge</p>
-      <button type="button">PLAY</button>
-    </main>
-  );
+  return <GameScreen />;
 }
 
 export default App;
