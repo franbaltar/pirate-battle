@@ -17,7 +17,11 @@ type Projectile = {
   directionY: number;
 };
 
-export default function GameScreen() {
+type GameScreenProps = {
+  duration: number;
+};
+
+export default function GameScreen({ duration }: GameScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -241,7 +245,7 @@ export default function GameScreen() {
       let playerHealth: number = GAME_CONFIG.player.maxHealth;
       let isGameOver = false;
       let isPaused = false;
-      let remainingTime: number = GAME_CONFIG.game.duration;
+      let remainingTime: number = duration;
       let elapsedTickerFrames = 0;
       const playerHealthText = new Text({
         text: `HP: ${playerHealth}`,
@@ -294,7 +298,7 @@ export default function GameScreen() {
         playerHealthText.text = `HP: ${playerHealth}`;
         playerScore = 0;
         playerScoreText.text = `Score: ${playerScore}`;
-        remainingTime = GAME_CONFIG.game.duration;
+        remainingTime = duration;
         elapsedTickerFrames = 0;
         timerText.text = `Time: ${remainingTime}`;
         shootCooldown = 0;

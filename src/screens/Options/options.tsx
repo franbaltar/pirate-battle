@@ -1,13 +1,24 @@
 type OptionsProps = {
   onBack: () => void;
+  duration: number;
+  onDurationChange: (duration: number) => void;
 };
 
-export default function Options({ onBack }: OptionsProps) {
+export default function Options({
+  onBack,
+  duration,
+  onDurationChange,
+}: OptionsProps) {
   return (
     <main>
       <h1>Options</h1>
       <label htmlFor="game-duration">Game duration</label>
-      <select id="game-duration" name="game-duration">
+      <select
+        id="game-duration"
+        name="game-duration"
+        value={duration}
+        onChange={(event) => onDurationChange(Number(event.target.value))}
+      >
         <option value="30">30 seconds</option>
         <option value="60">60 seconds</option>
         <option value="90">90 seconds</option>
