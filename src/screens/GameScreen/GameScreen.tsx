@@ -69,6 +69,14 @@ export default function GameScreen() {
       ship.position.set(app.screen.width / 2, app.screen.height / 2);
       app.stage.addChild(ship);
 
+      const chaserRadius = 18;
+      const chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
+      chaser.position.set(
+        Math.max(chaserRadius, Math.min(48, app.screen.width - chaserRadius)),
+        Math.max(chaserRadius, Math.min(48, app.screen.height - chaserRadius)),
+      );
+      app.stage.addChild(chaser);
+
       if (isUnmounted) {
         app.destroy({ removeView: true });
         return;
@@ -127,6 +135,7 @@ export default function GameScreen() {
       const movementSpeed = 4;
       const rotationSpeed = 0.05;
       const shipCollisionRadius = 20;
+      const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
         shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
 
@@ -164,6 +173,38 @@ export default function GameScreen() {
         if (!collidesWithIsland) {
           ship.x = nextX;
           ship.y = nextY;
+        }
+
+        const directionX = ship.x - chaser.x;
+        const directionY = ship.y - chaser.y;
+        const distanceToShip = Math.hypot(directionX, directionY);
+
+        if (distanceToShip > 0) {
+          const movementDistance = chaserSpeed * ticker.deltaTime;
+          const nextChaserX = Math.max(
+            chaserRadius,
+            Math.min(
+              app.screen.width - chaserRadius,
+              chaser.x + (directionX / distanceToShip) * movementDistance,
+            ),
+          );
+          const nextChaserY = Math.max(
+            chaserRadius,
+            Math.min(
+              app.screen.height - chaserRadius,
+              chaser.y + (directionY / distanceToShip) * movementDistance,
+            ),
+          );
+          const chaserCollidesWithIsland = islands.some(
+            (island) =>
+              Math.hypot(nextChaserX - island.x, nextChaserY - island.y) <
+              chaserRadius + island.radius,
+          );
+
+          if (!chaserCollidesWithIsland) {
+            chaser.x = nextChaserX;
+            chaser.y = nextChaserY;
+          }
         }
 
         for (let index = projectiles.length - 1; index >= 0; index--) {
