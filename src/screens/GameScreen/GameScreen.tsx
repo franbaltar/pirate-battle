@@ -1,5 +1,6 @@
 import { Application, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
+import { Player } from "../../game/entities/Player";
 
 type Island = {
   x: number;
@@ -63,11 +64,9 @@ export default function GameScreen() {
         app.stage.addChild(island.graphic);
       }
 
-      const ship = new Graphics()
-        .poly([0, -28, 16, 18, 0, 12, -16, 18])
-        .fill(0xf4d35e);
-      ship.position.set(app.screen.width / 2, app.screen.height / 2);
-      app.stage.addChild(ship);
+      const player = new Player();
+      player.reset(app.screen.width / 2, app.screen.height / 2);
+      app.stage.addChild(player.graphic);
 
       const chaserRadius = 18;
       const initialChaserPosition = {
@@ -107,8 +106,10 @@ export default function GameScreen() {
       const shooterPosition =
         shooterPositions.find(
           (position) =>
-            Math.hypot(position.x - ship.x, position.y - ship.y) > 250 &&
-            isClearOfIslands(position),
+            Math.hypot(
+              position.x - player.graphic.x,
+              position.y - player.graphic.y,
+            ) > 250 && isClearOfIslands(position),
         ) ??
         shooterPositions.find(isClearOfIslands) ??
         shooterPositions[0];
@@ -121,8 +122,8 @@ export default function GameScreen() {
       const shooterFireInterval = 90;
       let shooterFireCooldown = shooterFireInterval;
       const fireShooterProjectile = () => {
-        const directionX = ship.x - shooter.x;
-        const directionY = ship.y - shooter.y;
+        const directionX = player.graphic.x - shooter.x;
+        const directionY = player.graphic.y - shooter.y;
         const distanceToShip = Math.hypot(directionX, directionY);
         if (distanceToShip === 0) return;
 
@@ -162,14 +163,14 @@ export default function GameScreen() {
       const projectileCooldown = 15;
       let shootCooldown = 0;
       const fireProjectile = () => {
-        const directionX = Math.sin(ship.rotation);
-        const directionY = -Math.cos(ship.rotation);
+        const directionX = Math.sin(player.graphic.rotation);
+        const directionY = -Math.cos(player.graphic.rotation);
         const graphic = new Graphics()
           .circle(0, 0, projectileRadius)
           .fill(0xffffff);
         graphic.position.set(
-          ship.x + directionX * 30,
-          ship.y + directionY * 30,
+          player.graphic.x + directionX * 30,
+          player.graphic.y + directionY * 30,
         );
         app.stage.addChild(graphic);
         projectiles.push({ graphic, directionX, directionY });
@@ -201,9 +202,6 @@ export default function GameScreen() {
       const handleKeyUp = (event: KeyboardEvent) => {
         pressedKeys.delete(event.key.toLowerCase());
       };
-      const movementSpeed = 4;
-      const rotationSpeed = 0.05;
-      const shipCollisionRadius = 20;
       let playerHealth = 3;
       let isGameOver = false;
       let remainingTime = 30;
@@ -257,8 +255,7 @@ export default function GameScreen() {
         shootCooldown = 0;
         shooterFireCooldown = shooterFireInterval;
 
-        ship.position.set(app.screen.width / 2, app.screen.height / 2);
-        ship.rotation = 0;
+        player.reset(app.screen.width / 2, app.screen.height / 2);
 
         if (!chaserIsActive) {
           chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
@@ -301,38 +298,41 @@ export default function GameScreen() {
           Number(pressedKeys.has("w") || pressedKeys.has("arrowup")) -
           Number(pressedKeys.has("s") || pressedKeys.has("arrowdown"));
 
-        ship.rotation += turnDirection * rotationSpeed * ticker.deltaTime;
+        player.graphic.rotation +=
+          turnDirection * player.rotationSpeed * ticker.deltaTime;
 
         const movementDistance =
-          thrustDirection * movementSpeed * ticker.deltaTime;
+          thrustDirection * player.movementSpeed * ticker.deltaTime;
         const nextX = Math.max(
           16,
           Math.min(
             app.screen.width - 16,
-            ship.x + Math.sin(ship.rotation) * movementDistance,
+            player.graphic.x +
+              Math.sin(player.graphic.rotation) * movementDistance,
           ),
         );
         const nextY = Math.max(
           28,
           Math.min(
             app.screen.height - 18,
-            ship.y - Math.cos(ship.rotation) * movementDistance,
+            player.graphic.y -
+              Math.cos(player.graphic.rotation) * movementDistance,
           ),
         );
         const collidesWithIsland = islands.some(
           (island) =>
             Math.hypot(nextX - island.x, nextY - island.y) <
-            shipCollisionRadius + island.radius,
+            player.collisionRadius + island.radius,
         );
 
         if (!collidesWithIsland) {
-          ship.x = nextX;
-          ship.y = nextY;
+          player.graphic.x = nextX;
+          player.graphic.y = nextY;
         }
 
         if (chaserIsActive) {
-          const directionX = ship.x - chaser.x;
-          const directionY = ship.y - chaser.y;
+          const directionX = player.graphic.x - chaser.x;
+          const directionY = player.graphic.y - chaser.y;
           const distanceToShip = Math.hypot(directionX, directionY);
 
           if (distanceToShip > 0) {
@@ -370,8 +370,8 @@ export default function GameScreen() {
             shooterFireCooldown - ticker.deltaTime,
           );
 
-          const directionX = ship.x - shooter.x;
-          const directionY = ship.y - shooter.y;
+          const directionX = player.graphic.x - shooter.x;
+          const directionY = player.graphic.y - shooter.y;
           const distanceToShip = Math.hypot(directionX, directionY);
 
           if (distanceToShip > 250) {
@@ -476,10 +476,10 @@ export default function GameScreen() {
           );
           const collidesWithPlayer =
             Math.hypot(
-              projectile.graphic.x - ship.x,
-              projectile.graphic.y - ship.y,
+              projectile.graphic.x - player.graphic.x,
+              projectile.graphic.y - player.graphic.y,
             ) <
-            shooterProjectileRadius + shipCollisionRadius;
+            shooterProjectileRadius + player.collisionRadius;
           const isOutsideScreen =
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
