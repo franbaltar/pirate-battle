@@ -201,9 +201,9 @@ export default function GameScreen() {
       const handleKeyUp = (event: KeyboardEvent) => {
         pressedKeys.delete(event.key.toLowerCase());
       };
-      let playerHealth = 3;
+      let playerHealth: number = GAME_CONFIG.player.maxHealth;
       let isGameOver = false;
-      let remainingTime = 30;
+      let remainingTime: number = GAME_CONFIG.game.duration;
       let elapsedTickerFrames = 0;
       const playerHealthText = new Text({
         text: `HP: ${playerHealth}`,
@@ -244,11 +244,11 @@ export default function GameScreen() {
         clearProjectiles(shooterProjectiles);
         pressedKeys.clear();
 
-        playerHealth = 3;
+        playerHealth = GAME_CONFIG.player.maxHealth;
         playerHealthText.text = `HP: ${playerHealth}`;
         playerScore = 0;
         playerScoreText.text = `Score: ${playerScore}`;
-        remainingTime = 30;
+        remainingTime = GAME_CONFIG.game.duration;
         elapsedTickerFrames = 0;
         timerText.text = `Time: ${remainingTime}`;
         shootCooldown = 0;
@@ -436,7 +436,7 @@ export default function GameScreen() {
               chaser.active = false;
               app.stage.removeChild(chaser.graphic);
               chaser.graphic.destroy();
-              playerScore += 100;
+              playerScore += GAME_CONFIG.chaser.score;
               playerScoreText.text = `Score: ${playerScore}`;
             }
           }
