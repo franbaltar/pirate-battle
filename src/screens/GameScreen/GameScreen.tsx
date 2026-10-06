@@ -199,6 +199,13 @@ export default function GameScreen() {
       });
       playerHealthText.position.set(20, 20);
       app.stage.addChild(playerHealthText);
+      let playerScore = 0;
+      const playerScoreText = new Text({
+        text: `Score: ${playerScore}`,
+        style: { fill: 0xffffff, fontSize: 20 },
+      });
+      playerScoreText.position.set(20, 50);
+      app.stage.addChild(playerScoreText);
       const gameOverText = new Text({
         text: "GAME OVER",
         style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
@@ -359,6 +366,8 @@ export default function GameScreen() {
               chaserIsActive = false;
               app.stage.removeChild(chaser);
               chaser.destroy();
+              playerScore += 100;
+              playerScoreText.text = `Score: ${playerScore}`;
             }
           }
 
