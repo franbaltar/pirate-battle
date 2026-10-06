@@ -108,6 +108,28 @@ export default function GameScreen() {
       shooter.position.set(shooterPosition.x, shooterPosition.y);
       app.stage.addChild(shooter);
       let shooterIsActive = true;
+      const shooterProjectiles: Projectile[] = [];
+      const shooterProjectileRadius = 4;
+      const shooterProjectileSpeed = 5;
+      const shooterFireInterval = 90;
+      let shooterFireCooldown = shooterFireInterval;
+      const fireShooterProjectile = () => {
+        const directionX = ship.x - shooter.x;
+        const directionY = ship.y - shooter.y;
+        const distanceToShip = Math.hypot(directionX, directionY);
+        if (distanceToShip === 0) return;
+
+        const graphic = new Graphics()
+          .circle(0, 0, shooterProjectileRadius)
+          .fill(0xd8b4e2);
+        graphic.position.set(shooter.x, shooter.y);
+        app.stage.addChild(graphic);
+        shooterProjectiles.push({
+          graphic,
+          directionX: directionX / distanceToShip,
+          directionY: directionY / distanceToShip,
+        });
+      };
 
       if (isUnmounted) {
         app.destroy({ removeView: true });
@@ -242,6 +264,11 @@ export default function GameScreen() {
         }
 
         if (shooterIsActive) {
+          shooterFireCooldown = Math.max(
+            0,
+            shooterFireCooldown - ticker.deltaTime,
+          );
+
           const directionX = ship.x - shooter.x;
           const directionY = ship.y - shooter.y;
           const distanceToShip = Math.hypot(directionX, directionY);
@@ -275,6 +302,11 @@ export default function GameScreen() {
               shooter.x = nextShooterX;
               shooter.y = nextShooterY;
             }
+          }
+
+          if (shooterFireCooldown === 0) {
+            fireShooterProjectile();
+            shooterFireCooldown = shooterFireInterval;
           }
         }
 
@@ -321,6 +353,34 @@ export default function GameScreen() {
             app.stage.removeChild(projectile.graphic);
             projectile.graphic.destroy();
             projectiles.splice(index, 1);
+          }
+        }
+
+        for (let index = shooterProjectiles.length - 1; index >= 0; index--) {
+          const projectile = shooterProjectiles[index];
+          projectile.graphic.x +=
+            projectile.directionX * shooterProjectileSpeed * ticker.deltaTime;
+          projectile.graphic.y +=
+            projectile.directionY * shooterProjectileSpeed * ticker.deltaTime;
+
+          const collidesWithIsland = islands.some(
+            (island) =>
+              Math.hypot(
+                projectile.graphic.x - island.x,
+                projectile.graphic.y - island.y,
+              ) <
+              shooterProjectileRadius + island.radius,
+          );
+          const isOutsideScreen =
+            projectile.graphic.x < 0 ||
+            projectile.graphic.x > app.screen.width ||
+            projectile.graphic.y < 0 ||
+            projectile.graphic.y > app.screen.height;
+
+          if (collidesWithIsland || isOutsideScreen) {
+            app.stage.removeChild(projectile.graphic);
+            projectile.graphic.destroy();
+            shooterProjectiles.splice(index, 1);
           }
         }
       };
