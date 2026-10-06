@@ -1,4 +1,4 @@
-import GameScreen from "./screens/GameScreen/GameScreen";
+import GameScreen from "./screens/GameScreen/gameScreen.tsx";
 
 function App() {
   return <GameScreen />;
