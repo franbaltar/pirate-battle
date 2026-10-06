@@ -8,6 +8,12 @@ type Island = {
   graphic: Graphics;
 };
 
+type Projectile = {
+  graphic: Graphics;
+  directionX: number;
+  directionY: number;
+};
+
 export default function GameScreen() {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +87,31 @@ export default function GameScreen() {
         "arrowleft",
         "arrowright",
       ]);
+      const projectiles: Projectile[] = [];
+      const projectileSpeed = 8;
+      const projectileCooldown = 15;
+      let shootCooldown = 0;
+      const fireProjectile = () => {
+        const directionX = Math.sin(ship.rotation);
+        const directionY = -Math.cos(ship.rotation);
+        const graphic = new Graphics().circle(0, 0, 4).fill(0xffffff);
+        graphic.position.set(
+          ship.x + directionX * 30,
+          ship.y + directionY * 30,
+        );
+        app.stage.addChild(graphic);
+        projectiles.push({ graphic, directionX, directionY });
+      };
       const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.code === "Space") {
+          event.preventDefault();
+          if (shootCooldown <= 0) {
+            fireProjectile();
+            shootCooldown = projectileCooldown;
+          }
+          return;
+        }
+
         const key = event.key.toLowerCase();
         if (movementKeys.has(key)) {
           event.preventDefault();
@@ -95,6 +125,8 @@ export default function GameScreen() {
       const rotationSpeed = 0.05;
       const shipCollisionRadius = 20;
       const updateShip = (ticker: { deltaTime: number }) => {
+        shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
+
         const turnDirection =
           Number(pressedKeys.has("d") || pressedKeys.has("arrowright")) -
           Number(pressedKeys.has("a") || pressedKeys.has("arrowleft"));
@@ -129,6 +161,25 @@ export default function GameScreen() {
         if (!collidesWithIsland) {
           ship.x = nextX;
           ship.y = nextY;
+        }
+
+        for (let index = projectiles.length - 1; index >= 0; index--) {
+          const projectile = projectiles[index];
+          projectile.graphic.x +=
+            projectile.directionX * projectileSpeed * ticker.deltaTime;
+          projectile.graphic.y +=
+            projectile.directionY * projectileSpeed * ticker.deltaTime;
+
+          if (
+            projectile.graphic.x < 0 ||
+            projectile.graphic.x > app.screen.width ||
+            projectile.graphic.y < 0 ||
+            projectile.graphic.y > app.screen.height
+          ) {
+            app.stage.removeChild(projectile.graphic);
+            projectile.graphic.destroy();
+            projectiles.splice(index, 1);
+          }
         }
       };
 
