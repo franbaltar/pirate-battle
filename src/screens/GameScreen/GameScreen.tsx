@@ -132,6 +132,7 @@ export default function GameScreen({
         shooterPositions.find(isClearOfIslands) ??
         shooterPositions[0];
       shooter.reset(shooterPosition.x, shooterPosition.y);
+      await shooter.ready;
       app.stage.addChild(shooter.graphic);
       const shooterProjectiles: Projectile[] = [];
       let shooterFireCooldown: number = shooter.fireInterval;
