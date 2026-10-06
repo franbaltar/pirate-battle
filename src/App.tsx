@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GameScreen from "./screens/GameScreen/gameScreen.tsx";
 import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
@@ -15,7 +16,9 @@ const DEFAULT_GAME_SETTINGS: GameSettings = {
   spawnRate: "normal",
 };
 
-function App() {
+const queryClient = new QueryClient();
+
+function AppContent() {
   const [screen, setScreen] = useState<"menu" | "game" | "options" | "result">(
     "menu",
   );
@@ -94,6 +97,14 @@ function App() {
       onPlay={() => setScreen("game")}
       onOptions={() => setScreen("options")}
     />
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
   );
 }
 
