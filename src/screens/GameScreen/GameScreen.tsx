@@ -193,6 +193,8 @@ export default function GameScreen() {
       const shipCollisionRadius = 20;
       let playerHealth = 3;
       let isGameOver = false;
+      let remainingTime = 30;
+      let elapsedTickerFrames = 0;
       const playerHealthText = new Text({
         text: `HP: ${playerHealth}`,
         style: { fill: 0xffffff, fontSize: 20 },
@@ -206,6 +208,12 @@ export default function GameScreen() {
       });
       playerScoreText.position.set(20, 50);
       app.stage.addChild(playerScoreText);
+      const timerText = new Text({
+        text: `Time: ${remainingTime}`,
+        style: { fill: 0xffffff, fontSize: 20 },
+      });
+      timerText.position.set(20, 80);
+      app.stage.addChild(timerText);
       const gameOverText = new Text({
         text: "GAME OVER",
         style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
@@ -217,6 +225,19 @@ export default function GameScreen() {
       const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
         if (isGameOver) return;
+
+        elapsedTickerFrames += ticker.deltaTime;
+        while (elapsedTickerFrames >= 60 && remainingTime > 0) {
+          elapsedTickerFrames -= 60;
+          remainingTime = Math.max(0, remainingTime - 1);
+          timerText.text = `Time: ${remainingTime}`;
+
+          if (remainingTime === 0) {
+            isGameOver = true;
+            gameOverText.visible = true;
+            return;
+          }
+        }
 
         shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
 
