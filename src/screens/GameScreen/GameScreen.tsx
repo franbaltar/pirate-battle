@@ -70,11 +70,18 @@ export default function GameScreen() {
       app.stage.addChild(ship);
 
       const chaserRadius = 18;
-      const chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
-      chaser.position.set(
-        Math.max(chaserRadius, Math.min(48, app.screen.width - chaserRadius)),
-        Math.max(chaserRadius, Math.min(48, app.screen.height - chaserRadius)),
-      );
+      const initialChaserPosition = {
+        x: Math.max(
+          chaserRadius,
+          Math.min(48, app.screen.width - chaserRadius),
+        ),
+        y: Math.max(
+          chaserRadius,
+          Math.min(48, app.screen.height - chaserRadius),
+        ),
+      };
+      let chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
+      chaser.position.set(initialChaserPosition.x, initialChaserPosition.y);
       app.stage.addChild(chaser);
       let chaserHealth = 3;
       let chaserIsActive = true;
@@ -168,7 +175,13 @@ export default function GameScreen() {
         projectiles.push({ graphic, directionX, directionY });
       };
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (isGameOver) return;
+        if (isGameOver) {
+          if (event.key.toLowerCase() === "r") {
+            event.preventDefault();
+            restartGame();
+          }
+          return;
+        }
 
         if (event.code === "Space") {
           event.preventDefault();
@@ -222,6 +235,46 @@ export default function GameScreen() {
       gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
       gameOverText.visible = false;
       app.stage.addChild(gameOverText);
+      const clearProjectiles = (activeProjectiles: Projectile[]) => {
+        for (const projectile of activeProjectiles) {
+          app.stage.removeChild(projectile.graphic);
+          projectile.graphic.destroy();
+        }
+        activeProjectiles.length = 0;
+      };
+      const restartGame = () => {
+        clearProjectiles(projectiles);
+        clearProjectiles(shooterProjectiles);
+        pressedKeys.clear();
+
+        playerHealth = 3;
+        playerHealthText.text = `HP: ${playerHealth}`;
+        playerScore = 0;
+        playerScoreText.text = `Score: ${playerScore}`;
+        remainingTime = 30;
+        elapsedTickerFrames = 0;
+        timerText.text = `Time: ${remainingTime}`;
+        shootCooldown = 0;
+        shooterFireCooldown = shooterFireInterval;
+
+        ship.position.set(app.screen.width / 2, app.screen.height / 2);
+        ship.rotation = 0;
+
+        if (!chaserIsActive) {
+          chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
+          app.stage.addChild(chaser);
+        }
+        chaser.position.set(initialChaserPosition.x, initialChaserPosition.y);
+        chaserHealth = 3;
+        chaserIsActive = true;
+
+        shooter.position.set(shooterPosition.x, shooterPosition.y);
+        shooterIsActive = true;
+
+        gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
+        gameOverText.visible = false;
+        isGameOver = false;
+      };
       const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
         if (isGameOver) return;
