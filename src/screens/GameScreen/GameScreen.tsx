@@ -160,7 +160,9 @@ export default function GameScreen() {
       const projectileRadius = GAME_CONFIG.projectile.radius;
       const projectileSpeed = GAME_CONFIG.projectile.speed;
       const projectileCooldown = GAME_CONFIG.projectile.cooldown;
+      const sideShotCooldown = GAME_CONFIG.projectile.sideShotCooldown;
       let shootCooldown = 0;
+      let sideShootCooldown = 0;
       const fireProjectile = () => {
         const directionX = Math.sin(player.graphic.rotation);
         const directionY = -Math.cos(player.graphic.rotation);
@@ -173,6 +175,25 @@ export default function GameScreen() {
         );
         app.stage.addChild(graphic);
         projectiles.push({ graphic, directionX, directionY });
+      };
+      const fireSideShot = () => {
+        const spread = GAME_CONFIG.projectile.sideShotSpread;
+        const angleOffsets = [-spread, 0, spread];
+
+        for (const angleOffset of angleOffsets) {
+          const direction = player.graphic.rotation + angleOffset;
+          const directionX = Math.sin(direction);
+          const directionY = -Math.cos(direction);
+          const graphic = new Graphics()
+            .circle(0, 0, projectileRadius)
+            .fill(0xffffff);
+          graphic.position.set(
+            player.graphic.x + directionX * 30,
+            player.graphic.y + directionY * 30,
+          );
+          app.stage.addChild(graphic);
+          projectiles.push({ graphic, directionX, directionY });
+        }
       };
       const handleKeyDown = (event: KeyboardEvent) => {
         if (isGameOver) {
@@ -188,6 +209,15 @@ export default function GameScreen() {
           if (shootCooldown <= 0) {
             fireProjectile();
             shootCooldown = projectileCooldown;
+          }
+          return;
+        }
+
+        if (event.key === "Shift") {
+          event.preventDefault();
+          if (sideShootCooldown <= 0) {
+            fireSideShot();
+            sideShootCooldown = sideShotCooldown;
           }
           return;
         }
@@ -252,6 +282,7 @@ export default function GameScreen() {
         elapsedTickerFrames = 0;
         timerText.text = `Time: ${remainingTime}`;
         shootCooldown = 0;
+        sideShootCooldown = 0;
         shooterFireCooldown = shooterFireInterval;
 
         player.reset(app.screen.width / 2, app.screen.height / 2);
@@ -284,6 +315,7 @@ export default function GameScreen() {
         }
 
         shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
+        sideShootCooldown = Math.max(0, sideShootCooldown - ticker.deltaTime);
 
         const turnDirection =
           Number(pressedKeys.has("d") || pressedKeys.has("arrowright")) -
