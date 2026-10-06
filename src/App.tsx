@@ -5,20 +5,35 @@ import Options from "./screens/Options/options";
 
 type GameSettings = {
   duration: number;
+  spawnRate: "low" | "normal" | "high";
 };
 
 function App() {
   const [screen, setScreen] = useState<"menu" | "game" | "options">("menu");
   const [gameSettings, setGameSettings] = useState<GameSettings>({
     duration: 30,
+    spawnRate: "normal",
   });
-  if (screen === "game") return <GameScreen duration={gameSettings.duration} />;
+  if (screen === "game") {
+    return (
+      <GameScreen
+        duration={gameSettings.duration}
+        spawnRate={gameSettings.spawnRate}
+      />
+    );
+  }
   if (screen === "options") {
     return (
       <Options
         onBack={() => setScreen("menu")}
         duration={gameSettings.duration}
-        onDurationChange={(duration) => setGameSettings({ duration })}
+        onDurationChange={(duration) =>
+          setGameSettings((settings) => ({ ...settings, duration }))
+        }
+        spawnRate={gameSettings.spawnRate}
+        onSpawnRateChange={(spawnRate) =>
+          setGameSettings((settings) => ({ ...settings, spawnRate }))
+        }
       />
     );
   }

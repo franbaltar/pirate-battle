@@ -11,6 +11,11 @@ export const GAME_CONFIG = {
     collisionRadius: 18,
     score: 100,
   },
+  spawnRate: {
+    low: 240,
+    normal: 120,
+    high: 60,
+  },
   shooter: {
     radius: 18,
     speed: 1.2,

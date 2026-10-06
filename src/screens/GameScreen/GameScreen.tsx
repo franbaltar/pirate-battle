@@ -19,9 +19,10 @@ type Projectile = {
 
 type GameScreenProps = {
   duration: number;
+  spawnRate: "low" | "normal" | "high";
 };
 
-export default function GameScreen({ duration }: GameScreenProps) {
+export default function GameScreen({ duration, spawnRate }: GameScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,6 +76,8 @@ export default function GameScreen({ duration }: GameScreenProps) {
       app.stage.addChild(player.graphic);
 
       const chaser = new Chaser();
+      const chaserRespawnInterval = GAME_CONFIG.spawnRate[spawnRate];
+      let chaserRespawnCooldown = 0;
       const initialChaserPosition = {
         x: Math.max(
           chaser.collisionRadius,
@@ -410,6 +413,16 @@ export default function GameScreen({ duration }: GameScreenProps) {
               chaser.graphic.y = nextChaserY;
             }
           }
+        } else {
+          chaserRespawnCooldown = Math.max(
+            0,
+            chaserRespawnCooldown - ticker.deltaTime,
+          );
+
+          if (chaserRespawnCooldown === 0) {
+            chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
+            app.stage.addChild(chaser.graphic);
+          }
         }
 
         if (shooterIsActive) {
@@ -490,6 +503,7 @@ export default function GameScreen({ duration }: GameScreenProps) {
               chaser.graphic.destroy();
               playerScore += GAME_CONFIG.chaser.score;
               playerScoreText.text = `Score: ${playerScore}`;
+              chaserRespawnCooldown = chaserRespawnInterval;
             }
           }
 

@@ -2,12 +2,16 @@ type OptionsProps = {
   onBack: () => void;
   duration: number;
   onDurationChange: (duration: number) => void;
+  spawnRate: "low" | "normal" | "high";
+  onSpawnRateChange: (spawnRate: "low" | "normal" | "high") => void;
 };
 
 export default function Options({
   onBack,
   duration,
   onDurationChange,
+  spawnRate,
+  onSpawnRateChange,
 }: OptionsProps) {
   return (
     <main>
@@ -24,7 +28,14 @@ export default function Options({
         <option value="90">90 seconds</option>
       </select>
       <label htmlFor="enemy-spawn-rate">Enemy spawn rate</label>
-      <select id="enemy-spawn-rate" name="enemy-spawn-rate">
+      <select
+        id="enemy-spawn-rate"
+        name="enemy-spawn-rate"
+        value={spawnRate}
+        onChange={(event) =>
+          onSpawnRateChange(event.target.value as OptionsProps["spawnRate"])
+        }
+      >
         <option value="low">Low</option>
         <option value="normal">Normal</option>
         <option value="high">High</option>
