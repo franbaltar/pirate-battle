@@ -204,9 +204,16 @@ export default function GameScreen() {
           return;
         }
 
+        if (event.key.toLowerCase() === "p") {
+          event.preventDefault();
+          isPaused = !isPaused;
+          pausedText.visible = isPaused;
+          return;
+        }
+
         if (event.code === "Space") {
           event.preventDefault();
-          if (shootCooldown <= 0) {
+          if (!isPaused && shootCooldown <= 0) {
             fireProjectile();
             shootCooldown = projectileCooldown;
           }
@@ -215,7 +222,7 @@ export default function GameScreen() {
 
         if (event.key === "Shift") {
           event.preventDefault();
-          if (sideShootCooldown <= 0) {
+          if (!isPaused && sideShootCooldown <= 0) {
             fireSideShot();
             sideShootCooldown = sideShotCooldown;
           }
@@ -233,6 +240,7 @@ export default function GameScreen() {
       };
       let playerHealth: number = GAME_CONFIG.player.maxHealth;
       let isGameOver = false;
+      let isPaused = false;
       let remainingTime: number = GAME_CONFIG.game.duration;
       let elapsedTickerFrames = 0;
       const playerHealthText = new Text({
@@ -262,6 +270,14 @@ export default function GameScreen() {
       gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
       gameOverText.visible = false;
       app.stage.addChild(gameOverText);
+      const pausedText = new Text({
+        text: "PAUSED",
+        style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
+      });
+      pausedText.anchor.set(0.5);
+      pausedText.position.set(app.screen.width / 2, app.screen.height / 2);
+      pausedText.visible = false;
+      app.stage.addChild(pausedText);
       const clearProjectiles = (activeProjectiles: Projectile[]) => {
         for (const projectile of activeProjectiles) {
           app.stage.removeChild(projectile.graphic);
@@ -299,7 +315,7 @@ export default function GameScreen() {
         isGameOver = false;
       };
       const updateShip = (ticker: { deltaTime: number }) => {
-        if (isGameOver) return;
+        if (isGameOver || isPaused) return;
 
         elapsedTickerFrames += ticker.deltaTime;
         while (elapsedTickerFrames >= 60 && remainingTime > 0) {
