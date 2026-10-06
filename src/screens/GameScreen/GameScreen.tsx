@@ -1,4 +1,4 @@
-import { Application, Graphics } from "pixi.js";
+import { Application, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
 
 type Island = {
@@ -189,6 +189,13 @@ export default function GameScreen() {
       const movementSpeed = 4;
       const rotationSpeed = 0.05;
       const shipCollisionRadius = 20;
+      let playerHealth = 3;
+      const playerHealthText = new Text({
+        text: `HP: ${playerHealth}`,
+        style: { fill: 0xffffff, fontSize: 20 },
+      });
+      playerHealthText.position.set(20, 20);
+      app.stage.addChild(playerHealthText);
       const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
         shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
@@ -371,13 +378,24 @@ export default function GameScreen() {
               ) <
               shooterProjectileRadius + island.radius,
           );
+          const collidesWithPlayer =
+            Math.hypot(
+              projectile.graphic.x - ship.x,
+              projectile.graphic.y - ship.y,
+            ) <
+            shooterProjectileRadius + shipCollisionRadius;
           const isOutsideScreen =
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
             projectile.graphic.y < 0 ||
             projectile.graphic.y > app.screen.height;
 
-          if (collidesWithIsland || isOutsideScreen) {
+          if (collidesWithPlayer) {
+            playerHealth -= 1;
+            playerHealthText.text = `HP: ${playerHealth}`;
+          }
+
+          if (collidesWithIsland || collidesWithPlayer || isOutsideScreen) {
             app.stage.removeChild(projectile.graphic);
             projectile.graphic.destroy();
             shooterProjectiles.splice(index, 1);
