@@ -88,13 +88,16 @@ export default function GameScreen() {
         "arrowright",
       ]);
       const projectiles: Projectile[] = [];
+      const projectileRadius = 4;
       const projectileSpeed = 8;
       const projectileCooldown = 15;
       let shootCooldown = 0;
       const fireProjectile = () => {
         const directionX = Math.sin(ship.rotation);
         const directionY = -Math.cos(ship.rotation);
-        const graphic = new Graphics().circle(0, 0, 4).fill(0xffffff);
+        const graphic = new Graphics()
+          .circle(0, 0, projectileRadius)
+          .fill(0xffffff);
         graphic.position.set(
           ship.x + directionX * 30,
           ship.y + directionY * 30,
@@ -170,7 +173,16 @@ export default function GameScreen() {
           projectile.graphic.y +=
             projectile.directionY * projectileSpeed * ticker.deltaTime;
 
+          const collidesWithIsland = islands.some(
+            (island) =>
+              Math.hypot(
+                projectile.graphic.x - island.x,
+                projectile.graphic.y - island.y,
+              ) <
+              projectileRadius + island.radius,
+          );
           if (
+            collidesWithIsland ||
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
             projectile.graphic.y < 0 ||
