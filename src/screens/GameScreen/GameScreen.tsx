@@ -1,5 +1,6 @@
 import { Application, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
+import { Chaser } from "../../game/entities/Chaser";
 import { Player } from "../../game/entities/Player";
 
 type Island = {
@@ -68,22 +69,19 @@ export default function GameScreen() {
       player.reset(app.screen.width / 2, app.screen.height / 2);
       app.stage.addChild(player.graphic);
 
-      const chaserRadius = 18;
+      const chaser = new Chaser();
       const initialChaserPosition = {
         x: Math.max(
-          chaserRadius,
-          Math.min(48, app.screen.width - chaserRadius),
+          chaser.collisionRadius,
+          Math.min(48, app.screen.width - chaser.collisionRadius),
         ),
         y: Math.max(
-          chaserRadius,
-          Math.min(48, app.screen.height - chaserRadius),
+          chaser.collisionRadius,
+          Math.min(48, app.screen.height - chaser.collisionRadius),
         ),
       };
-      let chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
-      chaser.position.set(initialChaserPosition.x, initialChaserPosition.y);
-      app.stage.addChild(chaser);
-      let chaserHealth = 3;
-      let chaserIsActive = true;
+      chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
+      app.stage.addChild(chaser.graphic);
 
       const shooterRadius = 18;
       const shooterSpeed = 1.2;
@@ -257,13 +255,9 @@ export default function GameScreen() {
 
         player.reset(app.screen.width / 2, app.screen.height / 2);
 
-        if (!chaserIsActive) {
-          chaser = new Graphics().circle(0, 0, chaserRadius).fill(0xe5484d);
-          app.stage.addChild(chaser);
-        }
-        chaser.position.set(initialChaserPosition.x, initialChaserPosition.y);
-        chaserHealth = 3;
-        chaserIsActive = true;
+        const chaserWasInactive = !chaser.active;
+        chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
+        if (chaserWasInactive) app.stage.addChild(chaser.graphic);
 
         shooter.position.set(shooterPosition.x, shooterPosition.y);
         shooterIsActive = true;
@@ -272,7 +266,6 @@ export default function GameScreen() {
         gameOverText.visible = false;
         isGameOver = false;
       };
-      const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
         if (isGameOver) return;
 
@@ -330,36 +323,38 @@ export default function GameScreen() {
           player.graphic.y = nextY;
         }
 
-        if (chaserIsActive) {
-          const directionX = player.graphic.x - chaser.x;
-          const directionY = player.graphic.y - chaser.y;
+        if (chaser.active) {
+          const directionX = player.graphic.x - chaser.graphic.x;
+          const directionY = player.graphic.y - chaser.graphic.y;
           const distanceToShip = Math.hypot(directionX, directionY);
 
           if (distanceToShip > 0) {
-            const movementDistance = chaserSpeed * ticker.deltaTime;
+            const movementDistance = chaser.movementSpeed * ticker.deltaTime;
             const nextChaserX = Math.max(
-              chaserRadius,
+              chaser.collisionRadius,
               Math.min(
-                app.screen.width - chaserRadius,
-                chaser.x + (directionX / distanceToShip) * movementDistance,
+                app.screen.width - chaser.collisionRadius,
+                chaser.graphic.x +
+                  (directionX / distanceToShip) * movementDistance,
               ),
             );
             const nextChaserY = Math.max(
-              chaserRadius,
+              chaser.collisionRadius,
               Math.min(
-                app.screen.height - chaserRadius,
-                chaser.y + (directionY / distanceToShip) * movementDistance,
+                app.screen.height - chaser.collisionRadius,
+                chaser.graphic.y +
+                  (directionY / distanceToShip) * movementDistance,
               ),
             );
             const chaserCollidesWithIsland = islands.some(
               (island) =>
                 Math.hypot(nextChaserX - island.x, nextChaserY - island.y) <
-                chaserRadius + island.radius,
+                chaser.collisionRadius + island.radius,
             );
 
             if (!chaserCollidesWithIsland) {
-              chaser.x = nextChaserX;
-              chaser.y = nextChaserY;
+              chaser.graphic.x = nextChaserX;
+              chaser.graphic.y = nextChaserY;
             }
           }
         }
@@ -427,19 +422,19 @@ export default function GameScreen() {
               projectileRadius + island.radius,
           );
           const collidesWithChaser =
-            chaserIsActive &&
+            chaser.active &&
             Math.hypot(
-              projectile.graphic.x - chaser.x,
-              projectile.graphic.y - chaser.y,
+              projectile.graphic.x - chaser.graphic.x,
+              projectile.graphic.y - chaser.graphic.y,
             ) <
-              projectileRadius + chaserRadius;
+              projectileRadius + chaser.collisionRadius;
 
           if (collidesWithChaser) {
-            chaserHealth -= 1;
-            if (chaserHealth === 0) {
-              chaserIsActive = false;
-              app.stage.removeChild(chaser);
-              chaser.destroy();
+            chaser.health -= 1;
+            if (chaser.health === 0) {
+              chaser.active = false;
+              app.stage.removeChild(chaser.graphic);
+              chaser.graphic.destroy();
               playerScore += 100;
               playerScoreText.text = `Score: ${playerScore}`;
             }
