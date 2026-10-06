@@ -79,6 +79,36 @@ export default function GameScreen() {
       let chaserHealth = 3;
       let chaserIsActive = true;
 
+      const shooterRadius = 18;
+      const shooterSpeed = 1.2;
+      const shooter = new Graphics().circle(0, 0, shooterRadius).fill(0x9b59b6);
+      const shooterPositions = [
+        { x: app.screen.width - shooterRadius, y: shooterRadius },
+        {
+          x: app.screen.width - shooterRadius,
+          y: app.screen.height - shooterRadius,
+        },
+        { x: shooterRadius, y: shooterRadius },
+        { x: shooterRadius, y: app.screen.height - shooterRadius },
+      ];
+      const isClearOfIslands = (position: { x: number; y: number }) =>
+        islands.every(
+          (island) =>
+            Math.hypot(position.x - island.x, position.y - island.y) >=
+            shooterRadius + island.radius,
+        );
+      const shooterPosition =
+        shooterPositions.find(
+          (position) =>
+            Math.hypot(position.x - ship.x, position.y - ship.y) > 250 &&
+            isClearOfIslands(position),
+        ) ??
+        shooterPositions.find(isClearOfIslands) ??
+        shooterPositions[0];
+      shooter.position.set(shooterPosition.x, shooterPosition.y);
+      app.stage.addChild(shooter);
+      let shooterIsActive = true;
+
       if (isUnmounted) {
         app.destroy({ removeView: true });
         return;
@@ -207,6 +237,43 @@ export default function GameScreen() {
             if (!chaserCollidesWithIsland) {
               chaser.x = nextChaserX;
               chaser.y = nextChaserY;
+            }
+          }
+        }
+
+        if (shooterIsActive) {
+          const directionX = ship.x - shooter.x;
+          const directionY = ship.y - shooter.y;
+          const distanceToShip = Math.hypot(directionX, directionY);
+
+          if (distanceToShip > 250) {
+            const movementDistance = Math.min(
+              shooterSpeed * ticker.deltaTime,
+              distanceToShip - 250,
+            );
+            const nextShooterX = Math.max(
+              shooterRadius,
+              Math.min(
+                app.screen.width - shooterRadius,
+                shooter.x + (directionX / distanceToShip) * movementDistance,
+              ),
+            );
+            const nextShooterY = Math.max(
+              shooterRadius,
+              Math.min(
+                app.screen.height - shooterRadius,
+                shooter.y + (directionY / distanceToShip) * movementDistance,
+              ),
+            );
+            const shooterCollidesWithIsland = islands.some(
+              (island) =>
+                Math.hypot(nextShooterX - island.x, nextShooterY - island.y) <
+                shooterRadius + island.radius,
+            );
+
+            if (!shooterCollidesWithIsland) {
+              shooter.x = nextShooterX;
+              shooter.y = nextShooterY;
             }
           }
         }
