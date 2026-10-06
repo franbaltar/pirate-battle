@@ -76,6 +76,7 @@ export default function GameScreen() {
         Math.max(chaserRadius, Math.min(48, app.screen.height - chaserRadius)),
       );
       app.stage.addChild(chaser);
+      let chaserIsActive = true;
 
       if (isUnmounted) {
         app.destroy({ removeView: true });
@@ -175,35 +176,37 @@ export default function GameScreen() {
           ship.y = nextY;
         }
 
-        const directionX = ship.x - chaser.x;
-        const directionY = ship.y - chaser.y;
-        const distanceToShip = Math.hypot(directionX, directionY);
+        if (chaserIsActive) {
+          const directionX = ship.x - chaser.x;
+          const directionY = ship.y - chaser.y;
+          const distanceToShip = Math.hypot(directionX, directionY);
 
-        if (distanceToShip > 0) {
-          const movementDistance = chaserSpeed * ticker.deltaTime;
-          const nextChaserX = Math.max(
-            chaserRadius,
-            Math.min(
-              app.screen.width - chaserRadius,
-              chaser.x + (directionX / distanceToShip) * movementDistance,
-            ),
-          );
-          const nextChaserY = Math.max(
-            chaserRadius,
-            Math.min(
-              app.screen.height - chaserRadius,
-              chaser.y + (directionY / distanceToShip) * movementDistance,
-            ),
-          );
-          const chaserCollidesWithIsland = islands.some(
-            (island) =>
-              Math.hypot(nextChaserX - island.x, nextChaserY - island.y) <
-              chaserRadius + island.radius,
-          );
+          if (distanceToShip > 0) {
+            const movementDistance = chaserSpeed * ticker.deltaTime;
+            const nextChaserX = Math.max(
+              chaserRadius,
+              Math.min(
+                app.screen.width - chaserRadius,
+                chaser.x + (directionX / distanceToShip) * movementDistance,
+              ),
+            );
+            const nextChaserY = Math.max(
+              chaserRadius,
+              Math.min(
+                app.screen.height - chaserRadius,
+                chaser.y + (directionY / distanceToShip) * movementDistance,
+              ),
+            );
+            const chaserCollidesWithIsland = islands.some(
+              (island) =>
+                Math.hypot(nextChaserX - island.x, nextChaserY - island.y) <
+                chaserRadius + island.radius,
+            );
 
-          if (!chaserCollidesWithIsland) {
-            chaser.x = nextChaserX;
-            chaser.y = nextChaserY;
+            if (!chaserCollidesWithIsland) {
+              chaser.x = nextChaserX;
+              chaser.y = nextChaserY;
+            }
           }
         }
 
@@ -222,8 +225,23 @@ export default function GameScreen() {
               ) <
               projectileRadius + island.radius,
           );
+          const collidesWithChaser =
+            chaserIsActive &&
+            Math.hypot(
+              projectile.graphic.x - chaser.x,
+              projectile.graphic.y - chaser.y,
+            ) <
+              projectileRadius + chaserRadius;
+
+          if (collidesWithChaser) {
+            chaserIsActive = false;
+            app.stage.removeChild(chaser);
+            chaser.destroy();
+          }
+
           if (
             collidesWithIsland ||
+            collidesWithChaser ||
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
             projectile.graphic.y < 0 ||
