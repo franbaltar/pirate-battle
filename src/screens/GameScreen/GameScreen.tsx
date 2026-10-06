@@ -157,9 +157,9 @@ export default function GameScreen() {
         "arrowright",
       ]);
       const projectiles: Projectile[] = [];
-      const projectileRadius = 4;
-      const projectileSpeed = 8;
-      const projectileCooldown = 15;
+      const projectileRadius = GAME_CONFIG.projectile.radius;
+      const projectileSpeed = GAME_CONFIG.projectile.speed;
+      const projectileCooldown = GAME_CONFIG.projectile.cooldown;
       let shootCooldown = 0;
       const fireProjectile = () => {
         const directionX = Math.sin(player.graphic.rotation);
