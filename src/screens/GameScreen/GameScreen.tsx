@@ -168,6 +168,8 @@ export default function GameScreen() {
         projectiles.push({ graphic, directionX, directionY });
       };
       const handleKeyDown = (event: KeyboardEvent) => {
+        if (isGameOver) return;
+
         if (event.code === "Space") {
           event.preventDefault();
           if (shootCooldown <= 0) {
@@ -190,14 +192,25 @@ export default function GameScreen() {
       const rotationSpeed = 0.05;
       const shipCollisionRadius = 20;
       let playerHealth = 3;
+      let isGameOver = false;
       const playerHealthText = new Text({
         text: `HP: ${playerHealth}`,
         style: { fill: 0xffffff, fontSize: 20 },
       });
       playerHealthText.position.set(20, 20);
       app.stage.addChild(playerHealthText);
+      const gameOverText = new Text({
+        text: "GAME OVER",
+        style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
+      });
+      gameOverText.anchor.set(0.5);
+      gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
+      gameOverText.visible = false;
+      app.stage.addChild(gameOverText);
       const chaserSpeed = 1.5;
       const updateShip = (ticker: { deltaTime: number }) => {
+        if (isGameOver) return;
+
         shootCooldown = Math.max(0, shootCooldown - ticker.deltaTime);
 
         const turnDirection =
@@ -391,8 +404,17 @@ export default function GameScreen() {
             projectile.graphic.y > app.screen.height;
 
           if (collidesWithPlayer) {
-            playerHealth -= 1;
+            playerHealth = Math.max(0, playerHealth - 1);
             playerHealthText.text = `HP: ${playerHealth}`;
+
+            if (playerHealth === 0) {
+              isGameOver = true;
+              gameOverText.position.set(
+                app.screen.width / 2,
+                app.screen.height / 2,
+              );
+              gameOverText.visible = true;
+            }
           }
 
           if (collidesWithIsland || collidesWithPlayer || isOutsideScreen) {
