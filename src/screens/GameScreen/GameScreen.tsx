@@ -92,26 +92,33 @@ export default function GameScreen() {
         pressedKeys.delete(event.key.toLowerCase());
       };
       const movementSpeed = 4;
+      const rotationSpeed = 0.05;
       const shipCollisionRadius = 20;
       const updateShip = (ticker: { deltaTime: number }) => {
-        let horizontal =
+        const turnDirection =
           Number(pressedKeys.has("d") || pressedKeys.has("arrowright")) -
           Number(pressedKeys.has("a") || pressedKeys.has("arrowleft"));
-        let vertical =
-          Number(pressedKeys.has("s") || pressedKeys.has("arrowdown")) -
-          Number(pressedKeys.has("w") || pressedKeys.has("arrowup"));
-        const magnitude = Math.hypot(horizontal, vertical) || 1;
-        const distance = (movementSpeed * ticker.deltaTime) / magnitude;
+        const thrustDirection =
+          Number(pressedKeys.has("w") || pressedKeys.has("arrowup")) -
+          Number(pressedKeys.has("s") || pressedKeys.has("arrowdown"));
 
-        horizontal *= distance;
-        vertical *= distance;
+        ship.rotation += turnDirection * rotationSpeed * ticker.deltaTime;
+
+        const movementDistance =
+          thrustDirection * movementSpeed * ticker.deltaTime;
         const nextX = Math.max(
           16,
-          Math.min(app.screen.width - 16, ship.x + horizontal),
+          Math.min(
+            app.screen.width - 16,
+            ship.x + Math.sin(ship.rotation) * movementDistance,
+          ),
         );
         const nextY = Math.max(
           28,
-          Math.min(app.screen.height - 18, ship.y + vertical),
+          Math.min(
+            app.screen.height - 18,
+            ship.y - Math.cos(ship.rotation) * movementDistance,
+          ),
         );
         const collidesWithIsland = islands.some(
           (island) =>
