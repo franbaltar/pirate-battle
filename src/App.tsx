@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import GameScreen from "./screens/GameScreen/gameScreen.tsx";
+import GameScreen from "./screens/GameScreen/GameScreen.tsx";
 import HistoryScreen from "./screens/HistoryScreen/historyScreen";
 import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
