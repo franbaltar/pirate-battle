@@ -1,0 +1,136 @@
+.main-menu {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+  padding: 24px;
+  background-image: url("../../assets/ui/ui_scene_background.png");
+  background-position: center;
+  background-size: cover;
+}
+
+.main-menu__panel {
+  display: flex;
+  width: min(100%, 420px);
+  aspect-ratio: 4 / 5;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 36px solid transparent;
+  border-image-source: url("../../assets/ui/menu/panel_menu.png");
+  border-image-slice: 36 fill;
+  border-image-width: 36px;
+  border-image-repeat: stretch;
+  padding: 18px 30px;
+}
+
+.main-menu__title {
+  display: block;
+  width: min(112%, 360px);
+  height: auto;
+  object-fit: contain;
+}
+
+.main-menu__heading {
+  display: grid;
+  width: 100%;
+  margin: 0;
+  place-items: center;
+}
+
+.main-menu__actions {
+  display: flex;
+  width: min(100%, 196px);
+  flex-direction: column;
+  gap: 4px;
+}
+
+.main-menu__button {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 256 / 88;
+  place-items: center;
+  border: 0;
+  padding: 0 24px;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: #fff3cf;
+  cursor: pointer;
+  font:
+    700 16px/1 Arial,
+    sans-serif;
+  text-shadow: 0 2px 2px #40200c;
+  transition:
+    filter 120ms ease,
+    transform 120ms ease;
+}
+
+.main-menu__button--primary {
+  background-image: url("../../assets/ui/menu/button_primary_normal.png");
+}
+
+.main-menu__button--primary:hover {
+  background-image: url("../../assets/ui/menu/button_primary_hover.png");
+}
+
+.main-menu__button--primary:active {
+  background-image: url("../../assets/ui/menu/button_primary_pressed.png");
+}
+
+.main-menu__button--secondary {
+  background-image: url("../../assets/ui/menu/button_secondary_normal.png");
+}
+
+.main-menu__button--secondary:active {
+  background-image: url("../../assets/ui/menu/button_secondary_pressed.png");
+}
+
+.main-menu__button:hover {
+  filter: brightness(1.12);
+}
+
+.main-menu__button:active {
+  filter: brightness(0.95);
+  transform: translateY(2px);
+}
+
+.main-menu__button:focus-visible {
+  outline: 3px solid #fff3cf;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .main-menu {
+    padding: 12px;
+  }
+
+  .main-menu__panel {
+    gap: 12px;
+    padding: 12px 20px;
+  }
+
+  .main-menu__actions {
+    width: min(100%, 160px);
+    gap: 4px;
+  }
+
+  .main-menu__button {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .main-menu__panel {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .main-menu__actions {
+    width: min(100%, 140px);
+    gap: 2px;
+  }
+}
