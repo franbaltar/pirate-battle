@@ -1,5 +1,26 @@
-import { Application, Graphics, Text } from "pixi.js";
+import {
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Text,
+  TilingSprite,
+} from "pixi.js";
 import { useEffect, useRef } from "react";
+import tile1Image from "../../assets/game/tile_1.png";
+import tile2Image from "../../assets/game/tile_2.png";
+import tile3Image from "../../assets/game/tile_3.png";
+import tile4Image from "../../assets/game/tile_4.png";
+import tile5Image from "../../assets/game/tile_5.png";
+import tile6Image from "../../assets/game/tile_6.png";
+import tile7Image from "../../assets/game/tile_7.png";
+import tile8Image from "../../assets/game/tile_8.png";
+import tile9Image from "../../assets/game/tile_9.png";
+import tile10Image from "../../assets/game/tile_10.png";
+import tile11Image from "../../assets/game/tile_11.png";
+import tile12Image from "../../assets/game/tile_12.png";
+import waterTileImage from "../../assets/game/tile_73.png";
 import { GAME_CONFIG } from "../../game/config/gameConfig";
 import { Chaser } from "../../game/entities/Chaser";
 import { Player } from "../../game/entities/Player";
@@ -46,6 +67,30 @@ export default function GameScreen({
 
       app.renderer.background.color = 0x0b2d4a;
 
+      const waterTexture = await Assets.load(waterTileImage);
+      const islandTileTextures = await Promise.all(
+        [
+          tile1Image,
+          tile2Image,
+          tile3Image,
+          tile4Image,
+          tile5Image,
+          tile6Image,
+          tile7Image,
+          tile8Image,
+          tile9Image,
+          tile10Image,
+          tile11Image,
+          tile12Image,
+        ].map((image) => Assets.load(image)),
+      );
+      const oceanBackground = new TilingSprite({
+        texture: waterTexture,
+        width: app.screen.width,
+        height: app.screen.height,
+      });
+      app.stage.addChild(oceanBackground);
+
       const islands: Island[] = [
         {
           x: app.screen.width * 0.25,
@@ -68,12 +113,20 @@ export default function GameScreen({
       ];
 
       for (const island of islands) {
-        island.graphic
-          .circle(0, 0, island.radius)
-          .fill(0xc2a46b)
-          .circle(0, 0, island.radius * 0.72)
-          .fill(0x426b4a);
+        const islandVisual = new Container();
+        const tileSize = islandTileTextures[0].width;
+        islandTileTextures.forEach((texture, index) => {
+          const tile = new Sprite(texture);
+          tile.position.set(
+            (index % 4) * tileSize - tileSize * 2,
+            Math.floor(index / 4) * tileSize - tileSize * 1.5,
+          );
+          islandVisual.addChild(tile);
+        });
+        islandVisual.scale.set((island.radius * 2) / (tileSize * 4));
+
         island.graphic.position.set(island.x, island.y);
+        island.graphic.addChild(islandVisual);
         app.stage.addChild(island.graphic);
       }
 
