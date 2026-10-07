@@ -21,6 +21,9 @@ import tile10Image from "../../assets/game/tile_10.png";
 import tile11Image from "../../assets/game/tile_11.png";
 import tile12Image from "../../assets/game/tile_12.png";
 import cannonBallImage from "../../assets/game/cannon_ball.png";
+import fireImage from "../../assets/game/fire_2.png";
+import damageEffectImage from "../../assets/game/explosion_3.png";
+import deathExplosionImage from "../../assets/game/explosion_1.png";
 import counterPanelImage from "../../assets/hud/counter_panel.png";
 import heartIconImage from "../../assets/hud/icon_heart.png";
 import scoreIconImage from "../../assets/hud/icon_score.png";
@@ -97,7 +100,17 @@ export default function GameScreen({
           Assets.load(scoreIconImage),
           Assets.load(timeIconImage),
         ]);
-      const cannonBallTexture = await Assets.load(cannonBallImage);
+      const [
+        cannonBallTexture,
+        fireTexture,
+        damageEffectTexture,
+        deathExplosionTexture,
+      ] = await Promise.all([
+        Assets.load(cannonBallImage),
+        Assets.load(fireImage),
+        Assets.load(damageEffectImage),
+        Assets.load(deathExplosionImage),
+      ]);
       const oceanBackground = new TilingSprite({
         texture: waterTexture,
         width: app.screen.width,
@@ -210,6 +223,67 @@ export default function GameScreen({
         graphic.scale.set(0.8);
         return graphic;
       };
+      const temporaryEffects: {
+        sprite: Sprite;
+        elapsedMs: number;
+        durationMs: number;
+      }[] = [];
+      const createTemporaryEffect = (
+        texture: typeof fireTexture,
+        x: number,
+        y: number,
+        scale: number,
+        durationMs: number,
+        rotation = 0,
+        zIndex = 1,
+      ) => {
+        const sprite = new Sprite(texture);
+        sprite.anchor.set(0.5);
+        sprite.scale.set(scale);
+        sprite.rotation = rotation;
+        sprite.position.set(x, y);
+        sprite.zIndex = zIndex;
+        app.stage.addChild(sprite);
+        temporaryEffects.push({ sprite, elapsedMs: 0, durationMs });
+      };
+      const createMuzzleFlash = (
+        x: number,
+        y: number,
+        directionX: number,
+        directionY: number,
+      ) => {
+        createTemporaryEffect(
+          fireTexture,
+          x,
+          y,
+          0.55,
+          100,
+          Math.atan2(directionY, directionX) + Math.PI / 2,
+        );
+      };
+      const createDamageEffect = (x: number, y: number) => {
+        createTemporaryEffect(damageEffectTexture, x, y, 0.8, 140, 0, 21);
+      };
+      const createDeathEffect = (x: number, y: number, zIndex = 1) => {
+        createTemporaryEffect(deathExplosionTexture, x, y, 0.9, 220, 0, zIndex);
+      };
+      const updateTemporaryEffects = (ticker: { deltaMS: number }) => {
+        for (let index = temporaryEffects.length - 1; index >= 0; index--) {
+          const effect = temporaryEffects[index];
+          effect.elapsedMs += ticker.deltaMS;
+          effect.sprite.alpha = Math.max(
+            0,
+            1 - effect.elapsedMs / effect.durationMs,
+          );
+
+          if (effect.elapsedMs >= effect.durationMs) {
+            app.stage.removeChild(effect.sprite);
+            effect.sprite.destroy({ texture: false });
+            temporaryEffects.splice(index, 1);
+          }
+        }
+      };
+      app.ticker.add(updateTemporaryEffects);
       const fireShooterProjectile = () => {
         const directionX = player.graphic.x - shooter.graphic.x;
         const directionY = player.graphic.y - shooter.graphic.y;
@@ -218,6 +292,7 @@ export default function GameScreen({
 
         const graphic = createCannonBall();
         graphic.position.set(shooter.graphic.x, shooter.graphic.y);
+        createMuzzleFlash(graphic.x, graphic.y, directionX, directionY);
         app.stage.addChild(graphic);
         shooterProjectiles.push({
           graphic,
@@ -259,6 +334,7 @@ export default function GameScreen({
           player.graphic.x + directionX * 30,
           player.graphic.y + directionY * 30,
         );
+        createMuzzleFlash(graphic.x, graphic.y, directionX, directionY);
         app.stage.addChild(graphic);
         projectiles.push({ graphic, directionX, directionY });
       };
@@ -275,6 +351,7 @@ export default function GameScreen({
             player.graphic.x + directionX * 30,
             player.graphic.y + directionY * 30,
           );
+          createMuzzleFlash(graphic.x, graphic.y, directionX, directionY);
           app.stage.addChild(graphic);
           projectiles.push({ graphic, directionX, directionY });
         }
@@ -714,8 +791,10 @@ export default function GameScreen({
               projectileRadius + chaser.collisionRadius;
 
           if (collidesWithChaser) {
+            createDamageEffect(chaser.graphic.x, chaser.graphic.y);
             chaser.health -= 1;
             if (chaser.health === 0) {
+              createDeathEffect(chaser.graphic.x, chaser.graphic.y);
               chaser.active = false;
               app.stage.removeChild(chaser.graphic);
               chaser.graphic.destroy();
@@ -769,10 +848,12 @@ export default function GameScreen({
 
           if (collidesWithPlayer) {
             playerHealth = Math.max(0, playerHealth - 1);
+            createDamageEffect(player.graphic.x, player.graphic.y);
             playerHealthText.text = `${playerHealth} / ${GAME_CONFIG.player.maxHealth}`;
             healthCounter.centerContent();
 
             if (playerHealth === 0) {
+              createDeathEffect(player.graphic.x, player.graphic.y, 22);
               if (!isGameOver) {
                 isGameOver = true;
                 onGameOver(playerScore);
@@ -801,6 +882,12 @@ export default function GameScreen({
         window.removeEventListener("keydown", handleKeyDown);
         window.removeEventListener("keyup", handleKeyUp);
         app.ticker.remove(updateShip);
+        app.ticker.remove(updateTemporaryEffects);
+        for (const effect of temporaryEffects) {
+          app.stage.removeChild(effect.sprite);
+          effect.sprite.destroy({ texture: false });
+        }
+        temporaryEffects.length = 0;
         pressedKeys.clear();
       };
     };
