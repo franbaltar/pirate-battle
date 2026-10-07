@@ -19,6 +19,8 @@ export const GAME_CONFIG = {
   shooter: {
     radius: 18,
     speed: 1.2,
+    maxHealth: 3,
+    score: 150,
     projectileSpeed: 5,
     projectileRadius: 4,
     fireInterval: 90,

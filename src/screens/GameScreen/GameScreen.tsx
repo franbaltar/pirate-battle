@@ -214,6 +214,19 @@ export default function GameScreen({
         shooterPositions[0];
       shooter.reset(shooterPosition.x, shooterPosition.y);
       await shooter.ready;
+      const shooterSprite = shooter.graphic.children[0] as Sprite;
+      const shooterTexture = shooterSprite.texture;
+      const shooterSpriteScale = shooterSprite.scale.clone();
+      const shooterSpriteRotation = shooterSprite.rotation;
+      const createShooterGraphic = () => {
+        const graphic = new Container();
+        const sprite = new Sprite(shooterTexture);
+        sprite.anchor.set(0.5);
+        sprite.scale.copyFrom(shooterSpriteScale);
+        sprite.rotation = shooterSpriteRotation;
+        graphic.addChild(sprite);
+        return graphic;
+      };
       app.stage.addChild(shooter.graphic);
       const shooterProjectiles: Projectile[] = [];
       let shooterFireCooldown: number = shooter.fireInterval;
@@ -601,7 +614,12 @@ export default function GameScreen({
         chaser.reset(initialChaserPosition.x, initialChaserPosition.y);
         if (chaserWasInactive) app.stage.addChild(chaser.graphic);
 
+        const shooterWasInactive = !shooter.active;
+        if (shooterWasInactive) {
+          shooter.graphic = createShooterGraphic();
+        }
         shooter.reset(shooterPosition.x, shooterPosition.y);
+        if (shooterWasInactive) app.stage.addChild(shooter.graphic);
 
         gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
         gameOverText.visible = false;
@@ -789,6 +807,13 @@ export default function GameScreen({
               projectile.graphic.y - chaser.graphic.y,
             ) <
               projectileRadius + chaser.collisionRadius;
+          const collidesWithShooter =
+            shooter.active &&
+            Math.hypot(
+              projectile.graphic.x - shooter.graphic.x,
+              projectile.graphic.y - shooter.graphic.y,
+            ) <
+              projectileRadius + shooter.collisionRadius;
 
           if (collidesWithChaser) {
             createDamageEffect(chaser.graphic.x, chaser.graphic.y);
@@ -805,9 +830,24 @@ export default function GameScreen({
             }
           }
 
+          if (collidesWithShooter) {
+            createDamageEffect(shooter.graphic.x, shooter.graphic.y);
+            shooter.health -= 1;
+            if (shooter.health === 0) {
+              createDeathEffect(shooter.graphic.x, shooter.graphic.y);
+              shooter.active = false;
+              app.stage.removeChild(shooter.graphic);
+              shooter.graphic.destroy();
+              playerScore += shooter.score;
+              playerScoreText.text = `${playerScore}`;
+              scoreCounter.centerContent();
+            }
+          }
+
           if (
             collidesWithIsland ||
             collidesWithChaser ||
+            collidesWithShooter ||
             projectile.graphic.x < 0 ||
             projectile.graphic.x > app.screen.width ||
             projectile.graphic.y < 0 ||

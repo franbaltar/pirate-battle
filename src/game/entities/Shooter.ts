@@ -8,9 +8,12 @@ export class Shooter {
 
   readonly collisionRadius = GAME_CONFIG.shooter.radius;
   readonly movementSpeed = GAME_CONFIG.shooter.speed;
+  readonly maxHealth = GAME_CONFIG.shooter.maxHealth;
+  readonly score = GAME_CONFIG.shooter.score;
   readonly projectileSpeed = GAME_CONFIG.shooter.projectileSpeed;
   readonly projectileRadius = GAME_CONFIG.shooter.projectileRadius;
   readonly fireInterval = GAME_CONFIG.shooter.fireInterval;
+  health = this.maxHealth;
   active = true;
   private texture: Texture | null = null;
 
@@ -20,6 +23,7 @@ export class Shooter {
 
   reset(x: number, y: number) {
     this.graphic.position.set(x, y);
+    this.health = this.maxHealth;
     this.active = true;
   }
 
