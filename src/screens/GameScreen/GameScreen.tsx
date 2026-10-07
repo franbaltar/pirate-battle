@@ -20,6 +20,7 @@ import tile9Image from "../../assets/game/tile_9.png";
 import tile10Image from "../../assets/game/tile_10.png";
 import tile11Image from "../../assets/game/tile_11.png";
 import tile12Image from "../../assets/game/tile_12.png";
+import cannonBallImage from "../../assets/game/cannon_ball.png";
 import counterPanelImage from "../../assets/hud/counter_panel.png";
 import heartIconImage from "../../assets/hud/icon_heart.png";
 import scoreIconImage from "../../assets/hud/icon_score.png";
@@ -38,7 +39,7 @@ type Island = {
 };
 
 type Projectile = {
-  graphic: Graphics;
+  graphic: Sprite;
   directionX: number;
   directionY: number;
 };
@@ -96,6 +97,7 @@ export default function GameScreen({
           Assets.load(scoreIconImage),
           Assets.load(timeIconImage),
         ]);
+      const cannonBallTexture = await Assets.load(cannonBallImage);
       const oceanBackground = new TilingSprite({
         texture: waterTexture,
         width: app.screen.width,
@@ -202,15 +204,19 @@ export default function GameScreen({
       app.stage.addChild(shooter.graphic);
       const shooterProjectiles: Projectile[] = [];
       let shooterFireCooldown: number = shooter.fireInterval;
+      const createCannonBall = () => {
+        const graphic = new Sprite(cannonBallTexture);
+        graphic.anchor.set(0.5);
+        graphic.scale.set(0.8);
+        return graphic;
+      };
       const fireShooterProjectile = () => {
         const directionX = player.graphic.x - shooter.graphic.x;
         const directionY = player.graphic.y - shooter.graphic.y;
         const distanceToShip = Math.hypot(directionX, directionY);
         if (distanceToShip === 0) return;
 
-        const graphic = new Graphics()
-          .circle(0, 0, shooter.projectileRadius)
-          .fill(0xd8b4e2);
+        const graphic = createCannonBall();
         graphic.position.set(shooter.graphic.x, shooter.graphic.y);
         app.stage.addChild(graphic);
         shooterProjectiles.push({
@@ -248,9 +254,7 @@ export default function GameScreen({
       const fireProjectile = () => {
         const directionX = Math.sin(player.graphic.rotation);
         const directionY = -Math.cos(player.graphic.rotation);
-        const graphic = new Graphics()
-          .circle(0, 0, projectileRadius)
-          .fill(0xffffff);
+        const graphic = createCannonBall();
         graphic.position.set(
           player.graphic.x + directionX * 30,
           player.graphic.y + directionY * 30,
@@ -266,9 +270,7 @@ export default function GameScreen({
           const direction = player.graphic.rotation + angleOffset;
           const directionX = Math.sin(direction);
           const directionY = -Math.cos(direction);
-          const graphic = new Graphics()
-            .circle(0, 0, projectileRadius)
-            .fill(0xffffff);
+          const graphic = createCannonBall();
           graphic.position.set(
             player.graphic.x + directionX * 30,
             player.graphic.y + directionY * 30,
