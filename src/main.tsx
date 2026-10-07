@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import { worker } from "./mocks/browser";
 
 async function bootstrap() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV || import.meta.env.PROD) {
     await worker.start();
   }
 
