@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GameScreen from "./screens/GameScreen/gameScreen.tsx";
+import HistoryScreen from "./screens/HistoryScreen/historyScreen";
 import MainMenu from "./screens/MainMenu/mainMenu";
 import Options from "./screens/Options/options";
 import RankingScreen from "./screens/RankingScreen/rankingScreen";
 import ResultScreen from "./screens/ResultScreen/resultScreen";
-import { submitScore } from "./services/rankingService";
 
 type GameSettings = {
   duration: number;
@@ -22,7 +22,7 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const [screen, setScreen] = useState<
-    "menu" | "game" | "options" | "result" | "ranking"
+    "menu" | "game" | "options" | "result" | "ranking" | "history"
   >("menu");
   const [gameSettings, setGameSettings] = useState<GameSettings>(() => {
     try {
@@ -90,14 +90,14 @@ function AppContent() {
         score={finalScore}
         onRestart={() => setScreen("game")}
         onMenu={() => setScreen("menu")}
-        onSubmitScore={(playerName) =>
-          submitScore({ playerName, score: finalScore })
-        }
       />
     );
   }
   if (screen === "ranking") {
     return <RankingScreen onBack={() => setScreen("menu")} />;
+  }
+  if (screen === "history") {
+    return <HistoryScreen onBack={() => setScreen("menu")} />;
   }
 
   return (
@@ -105,6 +105,7 @@ function AppContent() {
       onPlay={() => setScreen("game")}
       onOptions={() => setScreen("options")}
       onRanking={() => setScreen("ranking")}
+      onHistory={() => setScreen("history")}
     />
   );
 }

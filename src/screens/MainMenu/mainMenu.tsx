@@ -2,12 +2,14 @@ type MainMenuProps = {
   onPlay: () => void;
   onOptions: () => void;
   onRanking: () => void;
+  onHistory: () => void;
 };
 
 export default function MainMenu({
   onPlay,
   onOptions,
   onRanking,
+  onHistory,
 }: MainMenuProps) {
   return (
     <main>
@@ -21,6 +23,9 @@ export default function MainMenu({
       </button>
       <button type="button" onClick={onRanking}>
         RANKING
+      </button>
+      <button type="button" onClick={onHistory}>
+        HISTORY
       </button>
     </main>
   );

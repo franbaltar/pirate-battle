@@ -6,8 +6,20 @@ export type RankingEntry = {
   score: number;
 };
 
+export type MatchHistoryEntry = {
+  id: number;
+  playerName: string;
+  score: number;
+  playedAt: string;
+};
+
 export async function getRanking(): Promise<RankingEntry[]> {
   const response = await api.get<RankingEntry[]>("/ranking");
+  return response.data;
+}
+
+export async function getHistory(): Promise<MatchHistoryEntry[]> {
+  const response = await api.get<MatchHistoryEntry[]>("/history");
   return response.data;
 }
 

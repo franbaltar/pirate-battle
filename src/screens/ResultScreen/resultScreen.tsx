@@ -1,19 +1,19 @@
 import { useState } from "react";
+import { useSubmitScore } from "../../hooks/useSubmitScore";
 
 type ResultScreenProps = {
   score: number;
   onRestart: () => void;
   onMenu: () => void;
-  onSubmitScore: (playerName: string) => void;
 };
 
 export default function ResultScreen({
   score,
   onRestart,
   onMenu,
-  onSubmitScore,
 }: ResultScreenProps) {
   const [playerName, setPlayerName] = useState("");
+  const mutation = useSubmitScore();
 
   return (
     <main>
@@ -29,11 +29,13 @@ export default function ResultScreen({
       />
       <button
         type="button"
-        onClick={() => onSubmitScore(playerName)}
-        disabled={!playerName.trim()}
+        onClick={() => mutation.mutate({ playerName, score })}
+        disabled={!playerName.trim() || mutation.isPending}
       >
-        SUBMIT SCORE
+        {mutation.isPending ? "SUBMITTING..." : "SUBMIT SCORE"}
       </button>
+      {mutation.isError ? <p>Failed to submit score.</p> : null}
+      {mutation.isSuccess ? <p>Score submitted!</p> : null}
       <button type="button" onClick={onRestart}>
         RESTART
       </button>
