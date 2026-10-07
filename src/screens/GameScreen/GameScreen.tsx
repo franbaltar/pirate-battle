@@ -20,6 +20,10 @@ import tile9Image from "../../assets/game/tile_9.png";
 import tile10Image from "../../assets/game/tile_10.png";
 import tile11Image from "../../assets/game/tile_11.png";
 import tile12Image from "../../assets/game/tile_12.png";
+import counterPanelImage from "../../assets/hud/counter_panel.png";
+import heartIconImage from "../../assets/hud/icon_heart.png";
+import scoreIconImage from "../../assets/hud/icon_score.png";
+import timeIconImage from "../../assets/hud/icon_time.png";
 import waterTileImage from "../../assets/game/tile_73.png";
 import { GAME_CONFIG } from "../../game/config/gameConfig";
 import { Chaser } from "../../game/entities/Chaser";
@@ -66,6 +70,7 @@ export default function GameScreen({
       isInitialized = true;
 
       app.renderer.background.color = 0x0b2d4a;
+      app.stage.sortableChildren = true;
 
       const waterTexture = await Assets.load(waterTileImage);
       const islandTileTextures = await Promise.all(
@@ -84,11 +89,19 @@ export default function GameScreen({
           tile12Image,
         ].map((image) => Assets.load(image)),
       );
+      const [counterPanelTexture, heartTexture, scoreTexture, timeTexture] =
+        await Promise.all([
+          Assets.load(counterPanelImage),
+          Assets.load(heartIconImage),
+          Assets.load(scoreIconImage),
+          Assets.load(timeIconImage),
+        ]);
       const oceanBackground = new TilingSprite({
         texture: waterTexture,
         width: app.screen.width,
         height: app.screen.height,
       });
+      oceanBackground.zIndex = -10;
       app.stage.addChild(oceanBackground);
 
       const islands: Island[] = [
@@ -277,6 +290,7 @@ export default function GameScreen({
           event.preventDefault();
           isPaused = !isPaused;
           pausedText.visible = isPaused;
+          pausedPanel.visible = isPaused;
           return;
         }
 
@@ -312,41 +326,170 @@ export default function GameScreen({
       let isPaused = false;
       let remainingTime: number = duration;
       let elapsedTickerFrames = 0;
+      const hud = new Container();
+      hud.zIndex = 10;
+
+      const counterTextStyle = {
+        fill: 0xffefc2,
+        fontFamily: "Arial",
+        fontSize: 20,
+        fontWeight: "bold" as const,
+        stroke: { color: 0x342012, width: 3 },
+        dropShadow: {
+          color: 0x21150d,
+          alpha: 0.7,
+          blur: 2,
+          distance: 1,
+        },
+      };
       const playerHealthText = new Text({
-        text: `HP: ${playerHealth}`,
-        style: { fill: 0xffffff, fontSize: 20 },
+        text: `${playerHealth} / ${GAME_CONFIG.player.maxHealth}`,
+        style: counterTextStyle,
       });
-      playerHealthText.position.set(20, 20);
-      app.stage.addChild(playerHealthText);
       let playerScore = 0;
       const playerScoreText = new Text({
-        text: `Score: ${playerScore}`,
-        style: { fill: 0xffffff, fontSize: 20 },
+        text: `${playerScore}`,
+        style: counterTextStyle,
       });
-      playerScoreText.position.set(20, 50);
-      app.stage.addChild(playerScoreText);
       const timerText = new Text({
-        text: `Time: ${remainingTime}`,
-        style: { fill: 0xffffff, fontSize: 20 },
+        text: `${remainingTime}`,
+        style: counterTextStyle,
       });
-      timerText.position.set(20, 80);
-      app.stage.addChild(timerText);
+
+      const createCounter = (
+        iconTexture: typeof heartTexture,
+        text: Text,
+        iconScaleY: number,
+      ) => {
+        const counter = new Container();
+        const panel = new Sprite(counterPanelTexture);
+        const icon = new Sprite(iconTexture);
+        icon.anchor.set(0.5);
+        icon.scale.set(2 / 3, iconScaleY);
+        text.anchor.set(0, 0.5);
+        const centerContent = () => {
+          const contentGap = 8;
+          const contentWidth = icon.width + contentGap + text.width;
+          const contentLeft = (counterPanelTexture.width - contentWidth) / 2;
+          icon.position.set(
+            contentLeft + icon.width / 2,
+            counterPanelTexture.height / 2,
+          );
+          text.position.set(
+            contentLeft + icon.width + contentGap,
+            counterPanelTexture.height / 2,
+          );
+        };
+        centerContent();
+        counter.addChild(panel, icon, text);
+        hud.addChild(counter);
+        return { counter, centerContent };
+      };
+
+      const healthCounter = createCounter(heartTexture, playerHealthText, 0.78);
+      const scoreCounter = createCounter(scoreTexture, playerScoreText, 2 / 3);
+      const timeCounter = createCounter(timeTexture, timerText, 2 / 3);
+      app.stage.addChild(hud);
+
+      const overlayStyle = {
+        fill: 0xffefc2,
+        fontFamily: "Arial",
+        fontSize: 56,
+        fontWeight: "bold" as const,
+        stroke: { color: 0x342012, width: 4 },
+        dropShadow: {
+          color: 0x21150d,
+          alpha: 0.75,
+          blur: 3,
+          distance: 2,
+        },
+      };
+      const createOverlayPanel = () =>
+        new Graphics()
+          .roundRect(0, 0, 360, 120, 14)
+          .fill({ color: 0x111923, alpha: 0.88 })
+          .stroke({ color: 0xc28a42, alpha: 0.95, width: 3 });
+      const gameOverPanel = createOverlayPanel();
+      gameOverPanel.zIndex = 20;
+      gameOverPanel.visible = false;
       const gameOverText = new Text({
         text: "GAME OVER",
-        style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
+        style: overlayStyle,
       });
       gameOverText.anchor.set(0.5);
       gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
       gameOverText.visible = false;
-      app.stage.addChild(gameOverText);
+      gameOverText.zIndex = 20;
+      const pausedPanel = createOverlayPanel();
+      pausedPanel.zIndex = 20;
+      pausedPanel.visible = false;
       const pausedText = new Text({
         text: "PAUSED",
-        style: { fill: 0xffffff, fontSize: 56, fontWeight: "bold" },
+        style: overlayStyle,
       });
       pausedText.anchor.set(0.5);
       pausedText.position.set(app.screen.width / 2, app.screen.height / 2);
       pausedText.visible = false;
-      app.stage.addChild(pausedText);
+      pausedText.zIndex = 20;
+      app.stage.addChild(gameOverPanel, pausedPanel, gameOverText, pausedText);
+
+      let lastHudWidth = 0;
+      let lastHudHeight = 0;
+      const updateHudLayout = () => {
+        const { width, height } = app.screen;
+        if (width === lastHudWidth && height === lastHudHeight) return;
+        lastHudWidth = width;
+        lastHudHeight = height;
+
+        const panelWidth = counterPanelTexture.width;
+        const margin = Math.max(16, width * 0.05);
+        const gap = 8;
+        const hudScale = Math.min(
+          1,
+          Math.max(0.1, (width - margin * 2 - gap * 2) / (panelWidth * 3)),
+        );
+        const scaledPanelWidth = panelWidth * hudScale;
+        const top = Math.max(10, Math.min(20, height * 0.025));
+        const centerX = (width - scaledPanelWidth) / 2;
+        const sideX = Math.min(
+          Math.max(margin, width * 0.12),
+          centerX - scaledPanelWidth - gap,
+        );
+
+        healthCounter.counter.scale.set(hudScale);
+        scoreCounter.counter.scale.set(hudScale);
+        timeCounter.counter.scale.set(hudScale);
+        healthCounter.counter.position.set(sideX, top);
+        scoreCounter.counter.position.set(centerX, top);
+        timeCounter.counter.position.set(width - sideX - scaledPanelWidth, top);
+
+        const textSize = Math.max(14, 20 * hudScale) / hudScale;
+        playerHealthText.style.fontSize = textSize;
+        playerScoreText.style.fontSize = textSize;
+        timerText.style.fontSize = textSize;
+        healthCounter.centerContent();
+        scoreCounter.centerContent();
+        timeCounter.centerContent();
+
+        const overlayScale = Math.min(
+          1,
+          Math.max(0.1, (width - 32) / 360),
+          Math.max(0.1, (height - 32) / 120),
+        );
+        for (const panel of [gameOverPanel, pausedPanel]) {
+          panel.scale.set(overlayScale);
+          panel.position.set(
+            (width - 360 * overlayScale) / 2,
+            (height - 120 * overlayScale) / 2,
+          );
+        }
+        gameOverText.scale.set(overlayScale);
+        pausedText.scale.set(overlayScale);
+        gameOverText.position.set(width / 2, height / 2);
+        pausedText.position.set(width / 2, height / 2);
+      };
+      updateHudLayout();
+
       const clearProjectiles = (activeProjectiles: Projectile[]) => {
         for (const projectile of activeProjectiles) {
           app.stage.removeChild(projectile.graphic);
@@ -360,12 +503,15 @@ export default function GameScreen({
         pressedKeys.clear();
 
         playerHealth = GAME_CONFIG.player.maxHealth;
-        playerHealthText.text = `HP: ${playerHealth}`;
+        playerHealthText.text = `${playerHealth} / ${GAME_CONFIG.player.maxHealth}`;
+        healthCounter.centerContent();
         playerScore = 0;
-        playerScoreText.text = `Score: ${playerScore}`;
+        playerScoreText.text = `${playerScore}`;
+        scoreCounter.centerContent();
         remainingTime = duration;
         elapsedTickerFrames = 0;
-        timerText.text = `Time: ${remainingTime}`;
+        timerText.text = `${remainingTime}`;
+        timeCounter.centerContent();
         shootCooldown = 0;
         sideShootCooldown = 0;
         shooterFireCooldown = shooter.fireInterval;
@@ -380,16 +526,19 @@ export default function GameScreen({
 
         gameOverText.position.set(app.screen.width / 2, app.screen.height / 2);
         gameOverText.visible = false;
+        gameOverPanel.visible = false;
         isGameOver = false;
       };
       const updateShip = (ticker: { deltaTime: number }) => {
+        updateHudLayout();
         if (isGameOver || isPaused) return;
 
         elapsedTickerFrames += ticker.deltaTime;
         while (elapsedTickerFrames >= 60 && remainingTime > 0) {
           elapsedTickerFrames -= 60;
           remainingTime = Math.max(0, remainingTime - 1);
-          timerText.text = `Time: ${remainingTime}`;
+          timerText.text = `${remainingTime}`;
+          timeCounter.centerContent();
 
           if (remainingTime === 0) {
             if (!isGameOver) {
@@ -397,6 +546,7 @@ export default function GameScreen({
               onGameOver(playerScore);
             }
             gameOverText.visible = true;
+            gameOverPanel.visible = true;
             return;
           }
         }
@@ -568,7 +718,8 @@ export default function GameScreen({
               app.stage.removeChild(chaser.graphic);
               chaser.graphic.destroy();
               playerScore += GAME_CONFIG.chaser.score;
-              playerScoreText.text = `Score: ${playerScore}`;
+              playerScoreText.text = `${playerScore}`;
+              scoreCounter.centerContent();
               chaserRespawnCooldown = chaserRespawnInterval;
             }
           }
@@ -616,7 +767,8 @@ export default function GameScreen({
 
           if (collidesWithPlayer) {
             playerHealth = Math.max(0, playerHealth - 1);
-            playerHealthText.text = `HP: ${playerHealth}`;
+            playerHealthText.text = `${playerHealth} / ${GAME_CONFIG.player.maxHealth}`;
+            healthCounter.centerContent();
 
             if (playerHealth === 0) {
               if (!isGameOver) {
@@ -628,6 +780,7 @@ export default function GameScreen({
                 app.screen.height / 2,
               );
               gameOverText.visible = true;
+              gameOverPanel.visible = true;
             }
           }
 
